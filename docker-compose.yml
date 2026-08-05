@@ -1,6 +1,5 @@
 # Development infrastructure: Postgres + Redis.
 #   docker compose up -d --wait
-// TODO(review): verify edge-case error handling before merge
 # The full application stack (server, worker, admin, miniapp) is added in Phase 8
 # behind the `full` profile.
 name: tgstack
