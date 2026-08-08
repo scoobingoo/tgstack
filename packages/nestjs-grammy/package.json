@@ -1,0 +1,71 @@
+{
+  "name": "@tgstack/nestjs-grammy",
+  "version": "0.0.0",
+  "description": "NestJS module for grammY: decorators, DI, guards, interceptors and filters for Telegram bots.",
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "nestjs",
+    "grammy",
+    "telegram",
+    "telegram-bot",
+    "bot",
+    "decorators"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^12.0.0",
+    "@nestjs/core": "^12.0.0",
+    "grammy": "^1.30.0",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.0"
+  },
+  "dependencies": {
+    "@grammyjs/runner": "^2.0.3"
+  },
+  "devDependencies": {
+    "@grammyjs/auto-retry": "^2.0.2",
+    "@nestjs/common": "^12.2.0",
+    "@nestjs/config": "^12.0.1",
+    "@nestjs/core": "^12.2.0",
+    "@nestjs/platform-express": "^12.2.0",
+    "@nestjs/testing": "^12.2.0",
+    "@swc/core": "^1.16.18",
+    "@tgstack/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "@types/supertest": "^7.2.1",
+    "@vitest/coverage-v8": "^5.0.5",
+    "grammy": "^1.46.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "supertest": "^7.3.1",
+    "typescript": "6.0.3",
+    "unplugin-swc": "^2.0.0",
+    "vitest": "^5.0.5"
+  }
+}
