@@ -73,7 +73,7 @@ export class GrammyLifecycle
   async beforeApplicationShutdown(): Promise<void> {
     if (this.runner?.isRunning()) {
       this.logger.log("Stopping long polling");
-      this.runner.stop();
+      await this.runner.stop();
     }
     this.runner = undefined;
   }
