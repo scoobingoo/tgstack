@@ -1,0 +1,12 @@
+{
+  "extends": "@tgstack/config/tsconfig.node.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "paths": {
+      "@tgstack/nestjs-grammy": ["./src/index.ts"],
+      "@tgstack/nestjs-grammy/testing": ["./src/testing/index.ts"]
+    }
+  },
+  "include": ["src", "test", "examples", "vitest.config.ts"]
+}
