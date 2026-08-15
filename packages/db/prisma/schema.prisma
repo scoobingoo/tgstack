@@ -1,0 +1,113 @@
+// tgstack data model. See docs/architecture.md.
+// Telegram IDs are BigInt here and strings in every JSON API (decision D6).
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  runtime                = "nodejs"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum BroadcastStatus {
+  DRAFT
+  QUEUED
+  RUNNING
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+enum PaymentStatus {
+  PAID
+  REFUNDED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  telegramId   BigInt    @unique
+  username     String?
+  firstName    String
+  lastName     String?
+  /// IETF language tag reported by Telegram.
+  languageCode String?
+  /// Locale chosen by the user (bot `/language`, Mini App profile).
+  locale       String    @default("en")
+  role         Role      @default(USER)
+  /// The user blocked the bot (Bot API 403) — skipped by broadcasts.
+  isBlocked    Boolean   @default(false)
+  /// EXAMPLE: answers of the onboarding wizard. Safe to drop with the example.
+  onboarding   Json?
+  createdAt    DateTime  @default(now())
+  lastSeenAt   DateTime  @default(now())
+  payments     Payment[]
+  broadcasts   Broadcast[] @relation("BroadcastAuthor")
+
+  @@index([createdAt])
+  @@index([lastSeenAt])
+  @@index([username])
+}
+
+model Broadcast {
+  id         String          @id @default(cuid())
+  /// Message text in Telegram HTML parse mode.
+  text       String
+  imageUrl   String?
+  buttonText String?
+  buttonUrl  String?
+  status     BroadcastStatus @default(DRAFT)
+  total      Int             @default(0)
+  sent       Int             @default(0)
+  failed     Int             @default(0)
+  authorId   String
+  author     User            @relation("BroadcastAuthor", fields: [authorId], references: [id])
+  createdAt  DateTime        @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  @@index([createdAt])
+}
+
+/// EXAMPLE: shop products sold for Telegram Stars.
+model Product {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  /// Price in Telegram Stars (currency XTR).
+  priceStars  Int
+  imageUrl    String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  payments    Payment[]
+}
+
+model Payment {
+  id                      String        @id @default(cuid())
+  userId                  String
+  user                    User          @relation(fields: [userId], references: [id])
+  productId               String?
+  product                 Product?      @relation(fields: [productId], references: [id])
+  amount                  Int
+  /// "XTR" for Telegram Stars.
+  currency                String
+  /// Payment provider name, e.g. "telegram-stars".
+  provider                String
+  telegramPaymentChargeId String        @unique
+  invoicePayload          String
+  status                  PaymentStatus @default(PAID)
+  createdAt               DateTime      @default(now())
+  refundedAt              DateTime?
+
+  @@index([userId])
+  @@index([createdAt])
+}
