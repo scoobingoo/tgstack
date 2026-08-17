@@ -16,7 +16,7 @@ export type Serialized<T> = T extends bigint
 
 /** `JSON.stringify` replacer that turns `bigint` values into strings. */
 export function bigIntReplacer(_key: string, value: unknown): unknown {
-  return typeof value === "bigint" ? Number(value) : value;
+  return typeof value === "bigint" ? value.toString() : value;
 }
 
 /** Stringifies a value, turning every `bigint` into a string. */
