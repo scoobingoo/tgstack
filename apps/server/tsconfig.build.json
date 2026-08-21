@@ -1,0 +1,11 @@
+{
+  "extends": "@tgstack/config/tsconfig.node.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": false,
+    "declaration": false,
+    "declarationMap": false
+  },
+  "include": ["src"]
+}
