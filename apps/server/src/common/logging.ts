@@ -23,7 +23,7 @@ export const LoggingModule = LoggerModule.forRootAsync({
       redact: {
         paths: [
           "req.headers.authorization",
-          "req.headers.set-cookie",
+          "req.headers.cookie",
           'req.headers["x-telegram-bot-api-secret-token"]',
           'res.headers["set-cookie"]',
         ],
