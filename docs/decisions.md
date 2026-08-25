@@ -61,3 +61,33 @@ Every non-obvious choice made while building tgstack. Format: **date — decisio
 - **Decision:** `**/*.md` is excluded from Biome.
 - **Reason:** Biome's Markdown formatter rewrites tables and spacing in hand-written docs (including `PLAN.md`), producing noisy diffs.
 - **Alternatives:** opt specific folders back in later.
+
+## D13 — Biome `useImportType` is off for NestJS code (2026-10-22)
+- **Decision:** `style/useImportType` is disabled for `packages/nestjs-grammy/**` and `apps/server/**`.
+- **Reason:** Nest's dependency injection reads constructor parameter types from `emitDecoratorMetadata`. Biome rewrote `import { PrismaService }` to `import type { … }`, which erases the class at runtime and breaks DI silently.
+- **Alternatives:** `biome-ignore` comments on every provider import (noisy, easy to forget).
+
+## D14 — nestjs-grammy installs its own error boundary (2026-10-22)
+- **Decision:** `createBot()` installs an error boundary in front of all middleware that calls the module's `catch` handler. Exception filters on bot handlers must return a value to mark an exception handled.
+- **Reason:** grammY only calls `bot.catch` while polling; in webhook mode an unhandled error became an HTTP 500 and Telegram would resend the update. NestJS 12 treats a filter that returns `undefined` as "not handled".
+- **Alternatives:** document "install `bot.errorBoundary()` yourself" (easy to miss).
+
+## D15 — `PrismaService` lives in `apps/server`; `packages/db` stays framework-agnostic (2026-10-22)
+- **Decision:** `packages/db` exports the generated client, `createPrismaClient`/`createPrismaAdapter`, BigInt JSON helpers, the seed and test helpers. The Nest `PrismaService` (lifecycle hooks) is in `apps/server/src/prisma`.
+- **Reason:** keeps `@nestjs/*` out of the database package so scripts and future apps can use it.
+- **Alternatives:** Nest peer dependency in `packages/db`.
+
+## D16 — Typed zod config module instead of `@nestjs/config` (2026-10-22)
+- **Decision:** `apps/server/src/config` validates `process.env` with a zod schema and provides an injectable `AppConfig` with a fully typed `env`. `main.ts` validates before Nest starts and prints every problem at once.
+- **Reason:** simpler, fully typed (no string keys), and failing before `NestFactory.create` gives a readable error instead of a stack trace.
+- **Alternatives:** `@nestjs/config` with `validate` (string-keyed `get()`; errors surface inside Nest's bootstrap).
+
+## D17 — One test database per package (2026-10-22)
+- **Decision:** integration tests derive `<TEST_DATABASE_URL>_<package>` and create/migrate it in Vitest's global setup.
+- **Reason:** Turborepo runs package test tasks in parallel; sharing one database made suites truncate each other's data.
+- **Alternatives:** Testcontainers per suite (slower, needs Docker-in-Docker in some CI setups), serialising all tests.
+
+## D18 — BigInt → string via Express' `json replacer` (2026-10-22)
+- **Decision:** `configureApp()` sets `app.set("json replacer", bigIntReplacer)`; `serializeBigInt()` is used where Express is not involved (SSE).
+- **Reason:** one switch covers every JSON response (D6) without patching `BigInt.prototype` or mapping every DTO.
+- **Alternatives:** a global interceptor that deep-copies responses; `BigInt.prototype.toJSON` monkey-patch.
