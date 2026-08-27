@@ -210,8 +210,7 @@ const moduleRef = await Test.createTestingModule({
     GrammyModule.forRoot({
       token: "1:TEST",
       mode: "none",
-      botConfig: { botInfo: api.botInfo },
-      transformers: [api.transformer],
+      botConfig: { botInfo: api.botInfo, client: api.clientOptions },
     }),
   ],
   providers: [GreetingUpdate],
@@ -224,6 +223,8 @@ api.callsTo("sendMessage").map((call) => call.payload.text); // ["Commands: /sta
 ```
 
 `MockBotApi#on(method, factory)` overrides a response, `fail(method, { error_code, description })` simulates API errors (`429`, `403`, …) and `pushUpdate()` feeds long polling.
+
+Prefer `client: api.clientOptions` (a mocked `fetch`) over `transformers: [api.transformer]`: the conversations plugin builds a fresh `Api` from the bot's client options for every conversation step, and those instances do not inherit `bot.api` transformers.
 
 ## License
 
