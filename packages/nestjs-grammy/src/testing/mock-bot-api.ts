@@ -1,4 +1,4 @@
-import type { Transformer } from "grammy";
+import type { ApiClientOptions, Transformer } from "grammy";
 import type { Update, UserFromGetMe } from "grammy/types";
 
 export interface RecordedApiCall {
@@ -49,9 +49,14 @@ export function createBotInfo(overrides: Partial<UserFromGetMe> = {}): UserFromG
 }
 
 /**
- * An in-memory Bot API. Install its {@link MockBotApi.transformer} on a bot
- * (`bot.api.config.use()` or the module's `transformers` option) and no request
- * ever leaves the process. Every call is recorded in {@link MockBotApi.calls}.
+ * An in-memory Bot API. Every call is recorded in {@link MockBotApi.calls} and
+ * no request ever leaves the process. Plug it in at one of two levels:
+ *
+ * - **HTTP level (recommended):** `botConfig: { client: api.clientOptions }`.
+ *   Covers every `Api` instance created from the bot's options, including the
+ *   ones the conversations plugin creates for each conversation step.
+ * - **Transformer level:** `transformers: [api.transformer]` (or
+ *   `bot.api.config.use()`). Only covers `bot.api` and contexts derived from it.
  */
 export class MockBotApi {
   readonly calls: RecordedApiCall[] = [];
@@ -62,7 +67,31 @@ export class MockBotApi {
   constructor(readonly botInfo: UserFromGetMe = createBotInfo()) {}
 
   /** grammY API transformer that answers every call from this mock. */
-  readonly transformer: Transformer = async (_prev, method, payload, signal) => {
+  readonly transformer: Transformer = (_prev, method, payload, signal) =>
+    this.respond(method, payload, signal) as never;
+
+  /** A `fetch` that answers Bot API HTTP requests from this mock. */
+  readonly fetch: typeof fetch = async (input, init) => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+    const method = new URL(url).pathname.split("/").pop() ?? "";
+    const body =
+      typeof init?.body === "string" ? (JSON.parse(init.body) as Record<string, unknown>) : {};
+    const response = await this.respond(method, body, init?.signal ?? undefined);
+    return new Response(JSON.stringify(response), {
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  /** Client options that route all HTTP traffic of a bot through {@link fetch}. */
+  get clientOptions(): ApiClientOptions {
+    return { fetch: this.fetch };
+  }
+
+  private async respond(
+    method: string,
+    payload: unknown,
+    signal: AbortSignalLike | null | undefined,
+  ): Promise<Record<string, unknown>> {
     const call: RecordedApiCall = {
       method,
       payload: (payload ?? {}) as Record<string, any>,
@@ -73,13 +102,13 @@ export class MockBotApi {
     const factory = this.factories.get(method);
     const result = factory
       ? await factory(call.payload, call)
-      : await this.defaultResult(method, call.payload, signal as AbortSignalLike | undefined);
+      : await this.defaultResult(method, call.payload, signal ?? undefined);
 
     if (result instanceof ApiError) {
-      return { ok: false, ...result.fixture } as never;
+      return { ok: false, ...result.fixture };
     }
-    return { ok: true, result } as never;
-  };
+    return { ok: true, result };
+  }
 
   /** Overrides the response of a method. */
   on(method: string, factory: ApiResultFactory): this {

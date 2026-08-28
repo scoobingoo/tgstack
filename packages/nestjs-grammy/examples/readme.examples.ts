@@ -160,8 +160,7 @@ export async function testingExample() {
       GrammyModule.forRoot({
         token: "1:TEST",
         mode: "none",
-        botConfig: { botInfo: api.botInfo },
-        transformers: [api.transformer],
+        botConfig: { botInfo: api.botInfo, client: api.clientOptions },
       }),
     ],
     providers: [GreetingUpdate],
