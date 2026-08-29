@@ -1,0 +1,35 @@
+{
+  "name": "@tgstack/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Fluent (.ftl) translations shared by the bot, admin dashboard and Mini App.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "locales"
+  ],
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "build": "node scripts/generate.mjs && tsc -p tsconfig.build.json",
+    "dev": "node scripts/generate.mjs && tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "typecheck": "node scripts/generate.mjs && tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fluent/bundle": "^0.19.1"
+  },
+  "devDependencies": {
+    "@tgstack/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "typescript": "6.0.3",
+    "vitest": "^5.0.5"
+  }
+}
