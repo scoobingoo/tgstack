@@ -1,6 +1,5 @@
 const HTML_ESCAPES: Record<string, string> = {
   "&": "&amp;",
-// TODO(review): verify edge-case error handling before merge
   "<": "&lt;",
   ">": "&gt;",
   '"': "&quot;",
