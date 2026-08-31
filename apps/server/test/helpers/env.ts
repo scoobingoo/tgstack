@@ -7,7 +7,7 @@ export const TEST_JWT_SECRET = "test-secret-test-secret-test-secret-!!";
 export function createTestEnv(overrides: Record<string, string | undefined> = {}): Env {
   return parseEnv({
     NODE_ENV: "test",
-    LOG_LEVEL: "silent",
+    LOG_LEVEL: process.env.TEST_LOG_LEVEL ?? "silent",
     DATABASE_URL: process.env.TEST_DATABASE_URL,
     REDIS_URL: process.env.TEST_REDIS_URL ?? "redis://127.0.0.1:6379/15",
     BOT_TOKEN: TEST_BOT_TOKEN,

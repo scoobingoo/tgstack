@@ -2,12 +2,17 @@ import {
   type ArgumentsHost,
   Catch,
   type ExceptionFilter,
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Logger,
+  Optional,
 } from "@nestjs/common";
+import { TelegramExecutionContext } from "@tgstack/nestjs-grammy";
 import type { Request, Response } from "express";
 import { ZodError } from "zod";
+import type { BotContext } from "../bot/bot.context.js";
+import { BotErrorHandler } from "../bot/bot-errors.js";
 
 export interface ErrorBody {
   statusCode: number;
@@ -19,14 +24,17 @@ export interface ErrorBody {
 
 /**
  * Turns every exception thrown while handling an HTTP request into a consistent
- * JSON body. Exceptions from other contexts (bot handlers) are re-thrown so the
- * bot's own filter and error handler deal with them.
+ * JSON body. In bot handlers, a `ForbiddenException` (e.g. from a guard) becomes a
+ * polite reply; anything else is re-thrown to the bot's error handler.
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger("HTTP");
 
+  constructor(@Optional() private readonly botErrors?: BotErrorHandler) {}
+
   catch(exception: unknown, host: ArgumentsHost): unknown {
+    if (TelegramExecutionContext.isTelegram(host)) return this.catchBot(exception, host);
     if (host.getType() !== "http") throw exception;
 
     const http = host.switchToHttp();
@@ -49,6 +57,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
     if (!response.headersSent) response.status(body.statusCode).json(body);
     return body;
+  }
+
+  private catchBot(exception: unknown, host: ArgumentsHost): Promise<true> {
+    if (!(exception instanceof ForbiddenException) || !this.botErrors) throw exception;
+    const ctx = TelegramExecutionContext.create(host).getContext<BotContext>();
+    this.logger.warn(`Bot: user ${ctx.from?.id} was denied (${exception.message})`);
+    // Returning a value marks the exception as handled.
+    return this.botErrors.reply(ctx, "error-forbidden").then(() => true as const);
   }
 
   private customPayload(exception: unknown): { status: number; body: object } | undefined {

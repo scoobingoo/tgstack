@@ -91,3 +91,18 @@ Every non-obvious choice made while building tgstack. Format: **date — decisio
 - **Decision:** `configureApp()` sets `app.set("json replacer", bigIntReplacer)`; `serializeBigInt()` is used where Express is not involved (SSE).
 - **Reason:** one switch covers every JSON response (D6) without patching `BigInt.prototype` or mapping every DTO.
 - **Alternatives:** a global interceptor that deep-copies responses; `BigInt.prototype.toJSON` monkey-patch.
+
+## D19 — Bot API mocked at the HTTP (`fetch`) level in tests (2026-10-22)
+- **Decision:** `MockBotApi` exposes `clientOptions` (a custom `fetch`) in addition to an API transformer; the server's tests use `botConfig.client`. With `NODE_ENV=test` and no mock, the server installs a `fetch` that throws.
+- **Reason:** the conversations plugin creates a fresh `Api` from the bot's client options for every conversation step; those instances do not inherit `bot.api` transformers, so a transformer-only mock let calls through to the real Telegram API.
+- **Alternatives:** intercepting `node-fetch` globally (brittle), a local fake Bot API HTTP server (more moving parts).
+
+## D20 — Own Redis storage adapter for sessions and conversations (2026-10-22)
+- **Decision:** `apps/server/src/bot/redis-storage.ts` implements grammY's `StorageAdapter` on the shared ioredis client (with TTL).
+- **Reason:** `@grammyjs/storage-redis@2.6.0` points its ESM `types` export at a file that is not published (`dist/mod.d.ts`), so it does not type-check under `NodeNext`. The adapter is 30 lines.
+- **Alternatives:** a `declare module` shim for the broken package.
+
+## D21 — Fluent files compiled into a TypeScript module (2026-10-22)
+- **Decision:** `packages/i18n/scripts/generate.mjs` turns `locales/<locale>/<namespace>.ftl` into `src/generated/resources.ts` at build time. The bot loads them into `@grammyjs/i18n`; the admin dashboard and Mini App use `createTranslator()` (`@fluent/bundle`). Isolation marks are disabled.
+- **Reason:** one source of truth for every app, no file-system access needed in browsers, and a parity test catches missing keys.
+- **Alternatives:** per-app translation files; loading `.ftl` files with bundler-specific raw imports.
