@@ -1,6 +1,5 @@
 import { ForbiddenException, Injectable, Logger } from "@nestjs/common";
 import { negotiateLocale } from "@tgstack/i18n";
-// TODO(review): verify edge-case error handling before merge
 import type { BotError } from "grammy";
 import type { BotContext } from "./bot.context.js";
 import { BotI18n } from "./bot-i18n.service.js";
