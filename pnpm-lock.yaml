@@ -184,6 +184,12 @@ importers:
       '@grammyjs/auto-retry':
         specifier: ^2.0.2
         version: 2.0.2(grammy@1.46.0)
+      '@grammyjs/conversations':
+        specifier: ^2.1.1
+        version: 2.1.1(grammy@1.46.0)
+      '@grammyjs/i18n':
+        specifier: ^1.1.2
+        version: 1.1.2(grammy@1.46.0)
       '@grammyjs/runner':
         specifier: ^2.0.3
         version: 2.0.3(grammy@1.46.0)
@@ -202,9 +208,15 @@ importers:
       '@tgstack/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@tgstack/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@tgstack/nestjs-grammy':
         specifier: workspace:*
         version: link:../../packages/nestjs-grammy
+      '@tgstack/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       grammy:
         specifier: ^1.46.0
         version: 1.46.0
@@ -309,6 +321,25 @@ importers:
         specifier: ^5.0.5
         version: 5.0.5(@types/node@24.19.2)(@vitest/coverage-v8@5.0.5)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
 
+  packages/i18n:
+    dependencies:
+      '@fluent/bundle':
+        specifier: ^0.19.1
+        version: 0.19.1
+    devDependencies:
+      '@tgstack/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^5.0.5
+        version: 5.0.5(@types/node@24.19.2)(@vitest/coverage-v8@5.0.5)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+
   packages/nestjs-grammy:
     dependencies:
       '@grammyjs/runner':
@@ -366,6 +397,28 @@ importers:
       unplugin-swc:
         specifier: ^2.0.0
         version: 2.0.0(@swc/core@1.16.18)(esbuild@0.28.2)(rolldown@1.2.14)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+      vitest:
+        specifier: ^5.0.5
+        version: 5.0.5(@types/node@24.19.2)(@vitest/coverage-v8@5.0.5)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+
+  packages/shared:
+    dependencies:
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@tgstack/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
+      '@vitest/coverage-v8':
+        specifier: ^5.0.5
+        version: 5.0.5(vitest@5.0.5)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
       vitest:
         specifier: ^5.0.5
         version: 5.0.5(@types/node@24.19.2)(@vitest/coverage-v8@5.0.5)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
@@ -486,6 +539,12 @@ packages:
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
+
+  '@deno/shim-deno-test@0.5.0':
+    resolution: {integrity: sha512-4nMhecpGlPi0cSzT67L+Tm+GOJqvuk8gqHBziqcUQOarnuIax1z96/gJHCSIz2Z0zhxE6Rzwb3IZXPtFh51j+w==}
+
+  '@deno/shim-deno@0.18.2':
+    resolution: {integrity: sha512-oQ0CVmOio63wlhwQF75zA4ioolPvOwAoK0yuzcS5bDC1JUvH3y1GS8xPh8EOpcoDQRU4FTG8OQfxhpR+c6DrzA==}
 
   '@electric-sql/pglite-socket@0.1.3':
     resolution: {integrity: sha512-LAciWM0M1dCL8hlsxu2venbVZcdxema0BtDfpWYVqr+Y468UADw0pFWidhKw1M8sfJ8rdLT71tjMmnirf/IZRQ==}
@@ -657,9 +716,33 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@fluent/bundle@0.17.1':
+    resolution: {integrity: sha512-CRFNT9QcSFAeFDneTF59eyv3JXFGhIIN4boUO2y22YmsuuKLyDk+N1I/NQUYz9Ab63e6V7T6vItoZIG/2oOOuw==}
+    engines: {node: '>=12.0.0', npm: '>=7.0.0'}
+
+  '@fluent/bundle@0.19.1':
+    resolution: {integrity: sha512-SWJLZrPamDPsJlFFOW1nkgN0j0rbPbmSdmK0XAoXlyqKieLtMVl4vzng3aR5pwKoUx0scug8+YY2oct3fdfy9A==}
+    engines: {node: '>=18.0.0', npm: '>=7.0.0'}
+
+  '@fluent/langneg@0.6.2':
+    resolution: {integrity: sha512-YF4gZ4sLYRQfctpUR2uhb5UyPUYY5n/bi3OaED/Q4awKjPjlaF8tInO3uja7pnLQcmLTURkZL7L9zxv2Z5NDwg==}
+    engines: {node: '>=12.0.0', npm: '>=7.0.0'}
+
   '@grammyjs/auto-retry@2.0.2':
     resolution: {integrity: sha512-b4A4p5jlYDiQtW0c0FXYe11WMkYoiW+5rvOaDMCOk1h7Pu2SDl7B7gmFF8cthWCx2+M2nWLOsBxAgbBG4kKWYg==}
     engines: {node: '>=12.20.0 || >=14.13.1'}
+    peerDependencies:
+      grammy: ^1.10.0
+
+  '@grammyjs/conversations@2.1.1':
+    resolution: {integrity: sha512-hoxqwSkaXDeU7mzXulpk3A4Cmd6UZO3HU4aPoITX5ekSHK7ZcUEmMl7RhKKkqw3z6zVbbAShQreJoVV5/dDSLA==}
+    engines: {node: ^12.20.0 || >=14.13.1}
+    peerDependencies:
+      grammy: ^1.20.1
+
+  '@grammyjs/i18n@1.1.2':
+    resolution: {integrity: sha512-PcK06mxuDDZjxdZ5HywBhr+erEITsR816KP4DNIDDds1jpA45pfz/nS9FdZmzF8H6lMyPix3mV5WL1rT4q+BuA==}
+    engines: {node: '>=12'}
     peerDependencies:
       grammy: ^1.10.0
 
@@ -2116,6 +2199,10 @@ packages:
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
 
+  isexe@3.1.5:
+    resolution: {integrity: sha512-6B3tLtFqtQS4ekarvLVMZ+X+VlvQekbe4taUkf/rhVO3d/h0M2rfARm/pXLcPEsjjMsFgrFgSrhQIxcSVrBz8w==}
+    engines: {node: '>=18'}
+
   iterare@1.2.1:
     resolution: {integrity: sha512-RKYVTCjAnRthyJes037NX/IiqeidgN1xc3j1RjFfECFp28A1GVwK9nA+i0rJPaHqSZwygLzRnFlzUuHFoWWy+Q==}
     engines: {node: '>=6'}
@@ -2973,6 +3060,11 @@ packages:
     engines: {node: '>= 8'}
     hasBin: true
 
+  which@4.0.0:
+    resolution: {integrity: sha512-GlaYyEb07DPxYCKhKzplCWBJtvxZcZMrL+4UkrTSJHHPyZU4mYYTv3qaOe77H7EODLSSopAUFAc6W8U4yqvscg==}
+    engines: {node: ^16.13.0 || >=18.0.0}
+    hasBin: true
+
   why-is-node-running@3.2.1:
     resolution: {integrity: sha512-Tb2FUhB4vUsGQlfSquQLYkApkuPAFQXGFzxWKHHumVz2dK+X1RUm/HnID4+TfIGYJ1kTcwOaCk/buYCEJr6YjQ==}
     engines: {node: '>=20.11'}
@@ -3090,6 +3182,13 @@ snapshots:
   '@colors/colors@1.5.0':
     optional: true
 
+  '@deno/shim-deno-test@0.5.0': {}
+
+  '@deno/shim-deno@0.18.2':
+    dependencies:
+      '@deno/shim-deno-test': 0.5.0
+      which: 4.0.0
+
   '@electric-sql/pglite-socket@0.1.3(@electric-sql/pglite@0.4.3)':
     dependencies:
       '@electric-sql/pglite': 0.4.3
@@ -3178,12 +3277,29 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
+  '@fluent/bundle@0.17.1': {}
+
+  '@fluent/bundle@0.19.1': {}
+
+  '@fluent/langneg@0.6.2': {}
+
   '@grammyjs/auto-retry@2.0.2(grammy@1.46.0)':
     dependencies:
       debug: 4.4.3
       grammy: 1.46.0
     transitivePeerDependencies:
       - supports-color
+
+  '@grammyjs/conversations@2.1.1(grammy@1.46.0)':
+    dependencies:
+      grammy: 1.46.0
+
+  '@grammyjs/i18n@1.1.2(grammy@1.46.0)':
+    dependencies:
+      '@deno/shim-deno': 0.18.2
+      '@fluent/bundle': 0.17.1
+      '@fluent/langneg': 0.6.2
+      grammy: 1.46.0
 
   '@grammyjs/runner@2.0.3(grammy@1.46.0)':
     dependencies:
@@ -4550,6 +4666,8 @@ snapshots:
 
   isexe@2.0.0: {}
 
+  isexe@3.1.5: {}
+
   iterare@1.2.1: {}
 
   jiti@2.7.0: {}
@@ -5314,6 +5432,10 @@ snapshots:
   which@2.0.2:
     dependencies:
       isexe: 2.0.0
+
+  which@4.0.0:
+    dependencies:
+      isexe: 3.1.5
 
   why-is-node-running@3.2.1: {}
 
