@@ -34,6 +34,12 @@ command-onboarding = Thiết lập hồ sơ
 command-buy = Xem cửa hàng
 command-admin = Nhận liên kết đăng nhập quản trị
 
+admin-link =
+    🔐 Liên kết đăng nhập trang quản trị. Chỉ dùng được một lần và hết hạn sau { $minutes } phút:
+
+    { $url }
+admin-link-button = Mở trang quản trị
+
 ## VÍ DỤ: trình hướng dẫn làm quen (apps/server/src/examples/onboarding)
 
 onboarding-ask-name = Mình nên gọi bạn là gì? Hãy gửi tên của bạn, hoặc /cancel.

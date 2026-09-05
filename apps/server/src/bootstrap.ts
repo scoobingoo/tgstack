@@ -1,7 +1,9 @@
 import type { INestApplication } from "@nestjs/common";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { bigIntReplacer } from "@tgstack/db";
+import cookieParser from "cookie-parser";
 import { Logger } from "nestjs-pino";
+import { setupSwagger } from "./common/swagger.js";
 import { AppConfig } from "./config/app-config.js";
 import { EnvValidationError } from "./config/env.js";
 
@@ -16,9 +18,11 @@ export function configureApp(app: NestExpressApplication): INestApplication {
   app.set("json replacer", bigIntReplacer);
   app.set("trust proxy", 1);
   app.disable("x-powered-by");
+  app.use(cookieParser());
   app.setGlobalPrefix("api", { exclude: ["health"] });
   app.enableCors({ origin: config.corsOrigins, credentials: true });
   app.enableShutdownHooks();
+  if (!config.isProduction) setupSwagger(app);
   return app;
 }
 
