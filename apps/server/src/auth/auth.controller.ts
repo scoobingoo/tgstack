@@ -86,7 +86,7 @@ export class AuthController {
   private cookieOptions(maxAge?: number): CookieOptions {
     return {
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: "lax",
       secure: this.config.isProduction,
       path: "/",
       ...(maxAge === undefined ? {} : { maxAge }),
