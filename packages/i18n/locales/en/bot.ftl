@@ -34,6 +34,12 @@ command-onboarding = Set up your profile
 command-buy = Browse the shop
 command-admin = Get an admin login link
 
+admin-link =
+    🔐 Your admin dashboard login link. It works once and expires in { $minutes } minutes:
+
+    { $url }
+admin-link-button = Open the dashboard
+
 ## EXAMPLE: onboarding wizard (apps/server/src/examples/onboarding)
 
 onboarding-ask-name = What should I call you? Send me your name, or /cancel.

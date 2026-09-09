@@ -106,3 +106,18 @@ Every non-obvious choice made while building tgstack. Format: **date — decisio
 - **Decision:** `packages/i18n/scripts/generate.mjs` turns `locales/<locale>/<namespace>.ftl` into `src/generated/resources.ts` at build time. The bot loads them into `@grammyjs/i18n`; the admin dashboard and Mini App use `createTranslator()` (`@fluent/bundle`). Isolation marks are disabled.
 - **Reason:** one source of truth for every app, no file-system access needed in browsers, and a parity test catches missing keys.
 - **Alternatives:** per-app translation files; loading `.ftl` files with bundler-specific raw imports.
+
+## D22 — zod schemas are the single source for validation and OpenAPI (2026-10-22)
+- **Decision:** request/response schemas live in `packages/shared` (zod 4). The server validates with NestJS 12's `StandardSchemaValidationPipe` (`@Body({ schema })`) and documents with `@nestjs/swagger`'s Standard JSON Schema support (`standardSchema`). The dashboard parses responses with the same schemas.
+- **Reason:** no class-validator DTOs to keep in sync; the spec cannot drift from the code.
+- **Alternatives:** `nestjs-zod`; class-validator DTO classes.
+
+## D23 — Revocable JWT sessions (2026-10-22)
+- **Decision:** the session cookie holds a JWT signed with `JWT_SECRET` whose `sid` must also exist in Redis (12 h TTL). The guard reloads the user on every request.
+- **Reason:** stateless JWTs cannot be logged out or revoked; a Redis lookup per admin request is cheap and makes logout and demotion take effect immediately.
+- **Alternatives:** pure stateless JWT; server-side sessions without JWT (equivalent, but the signed token avoids a Redis lookup for garbage cookies).
+
+## D24 — Payments core is not an example; the shop catalogue is (2026-10-22)
+- **Decision:** `apps/server/src/payments` (provider interface, Telegram Stars provider, refunds, admin payment list) is core. Products and their admin CRUD live in `src/examples/shop`.
+- **Reason:** most bots that adopt the template want payments but sell their own things; `Payment.productId` is optional.
+- **Alternatives:** treat all of payments as an example.
