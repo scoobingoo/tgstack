@@ -3,6 +3,7 @@ import { APP_FILTER, APP_PIPE } from "@nestjs/core";
 import { AdminModule } from "./admin/admin.module.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { BotModule, type BotModuleOptions } from "./bot/bot.module.js";
+import { BroadcastsModule } from "./broadcasts/broadcasts.module.js";
 import { AllExceptionsFilter } from "./common/all-exceptions.filter.js";
 import { LoggingModule } from "./common/logging.js";
 import { createValidationPipe } from "./common/validation.js";
@@ -40,6 +41,7 @@ export class AppModule {
         AuthModule,
         AdminModule,
         PaymentsModule,
+        BroadcastsModule,
         // EXAMPLE modules — delete freely (docs/examples.md).
         OnboardingModule,
         ShopModule,

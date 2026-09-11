@@ -121,3 +121,18 @@ Every non-obvious choice made while building tgstack. Format: **date — decisio
 - **Decision:** `apps/server/src/payments` (provider interface, Telegram Stars provider, refunds, admin payment list) is core. Products and their admin CRUD live in `src/examples/shop`.
 - **Reason:** most bots that adopt the template want payments but sell their own things; `Payment.productId` is optional.
 - **Alternatives:** treat all of payments as an example.
+
+## D25 — Broadcast pacing: one message every 1000/rate ms (2026-10-22)
+- **Decision:** the message queue's BullMQ limiter is `{ max: 1, duration: ceil(1000 / BROADCAST_RATE_PER_SECOND) }`; a `429` pauses the queue for `retry_after` via `queue.rateLimit()` + `Worker.RateLimitError()`.
+- **Reason:** `{ max: rate, duration: 1000 }` allows bursts at window boundaries (up to 2× the rate in a sliding second). Even pacing provably keeps every 1-second window at or below the rate, which the integration test checks.
+- **Alternatives:** token bucket in Redis; grammY's throttler transformer (per process, not global).
+
+## D26 — `PATCH /api/admin/broadcasts/:id` for drafts (2026-10-22)
+- **Decision:** drafts are editable until started (not listed in PLAN T4.1).
+- **Reason:** the T5.2 composer needs to fix a typo found in the preview without creating a new draft each time.
+- **Alternatives:** create a new draft per edit (clutters the list).
+
+## D27 — Dev runs API and worker together with `tsc --watch` + `node --watch` (2026-10-22)
+- **Decision:** `apps/server` builds with plain `tsc`; `pnpm dev` runs one `tsc --watch` and `node --watch` for `main.js` and `main.worker.js` (via `concurrently`). The Nest CLI is not used.
+- **Reason:** two `nest start --watch` processes would fight over `dist/`; plain `tsc` is one less tool and emits the decorator metadata Nest needs.
+- **Alternatives:** Nest CLI with SWC builder; a second app package for the worker.
