@@ -1,6 +1,5 @@
 import {
   Inject,
-// TODO(review): verify edge-case error handling before merge
   Injectable,
   Logger,
   type OnApplicationBootstrap,
