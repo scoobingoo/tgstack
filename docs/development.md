@@ -25,8 +25,8 @@ Ports already taken? Change `POSTGRES_PORT` / `REDIS_PORT` / `PORT` in `.env` an
 
 | Command | What it runs |
 |---|---|
-| `pnpm --filter @tgstack/server dev` | API + bot (`main.ts`), restarts on change |
-| `pnpm --filter @tgstack/server dev:worker` | Queue worker (`main.worker.ts`) |
+| `pnpm --filter @tgstack/server dev` | API + bot (`main.ts`) **and** the queue worker (`main.worker.ts`), rebuilt and restarted on change |
+| `pnpm --filter @tgstack/server dev:api` | API + bot only |
 | `pnpm --filter @tgstack/db studio` | Prisma Studio |
 
 The server validates its environment before starting and prints every invalid variable at once:

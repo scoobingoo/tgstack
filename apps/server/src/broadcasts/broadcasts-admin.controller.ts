@@ -1,0 +1,137 @@
+import {
+  Body,
+  Get,
+  HttpCode,
+  type MessageEvent,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Sse,
+} from "@nestjs/common";
+import {
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiProduces,
+} from "@nestjs/swagger";
+import type { User } from "@tgstack/db";
+import {
+  type BroadcastContentBody,
+  type BroadcastDto,
+  type BroadcastProgressDto,
+  broadcastContentSchema,
+  broadcastProgressSchema,
+  broadcastSchema,
+  errorResponseSchema,
+  type ListBroadcastsQuery,
+  listBroadcastsQuerySchema,
+  type Paginated,
+  paginatedSchema,
+} from "@tgstack/shared";
+import {
+  distinctUntilChanged,
+  from,
+  interval,
+  map,
+  type Observable,
+  startWith,
+  switchMap,
+  takeWhile,
+} from "rxjs";
+import { CurrentAdmin } from "../auth/admin.guard.js";
+import { AdminController } from "../common/admin-controller.decorator.js";
+import { isTerminal } from "./broadcast-state.js";
+import { BroadcastsService } from "./broadcasts.service.js";
+
+/** How often the progress stream re-reads the counters. */
+export const PROGRESS_INTERVAL_MS = 1_000;
+
+@AdminController("broadcasts", "admin: broadcasts")
+export class BroadcastsAdminController {
+  constructor(private readonly broadcasts: BroadcastsService) {}
+
+  @Get()
+  @ApiOperation({ summary: "List broadcasts, newest first" })
+  @ApiOkResponse({ standardSchema: paginatedSchema(broadcastSchema) })
+  list(
+    @Query({ schema: listBroadcastsQuerySchema }) query: ListBroadcastsQuery,
+  ): Promise<Paginated<BroadcastDto>> {
+    return this.broadcasts.list(query);
+  }
+
+  @Post()
+  @ApiOperation({ summary: "Create a draft" })
+  @ApiCreatedResponse({ standardSchema: broadcastSchema })
+  create(
+    @Body({ schema: broadcastContentSchema }) body: BroadcastContentBody,
+    @CurrentAdmin() admin: User,
+  ): Promise<BroadcastDto> {
+    return this.broadcasts.create(body, admin);
+  }
+
+  @Get(":id")
+  @ApiOperation({ summary: "A broadcast with its progress counters" })
+  @ApiOkResponse({ standardSchema: broadcastSchema })
+  @ApiNotFoundResponse({ standardSchema: errorResponseSchema })
+  get(@Param("id") id: string): Promise<BroadcastDto> {
+    return this.broadcasts.get(id);
+  }
+
+  @Patch(":id")
+  @ApiOperation({ summary: "Edit a draft (replaces its content)" })
+  @ApiOkResponse({ standardSchema: broadcastSchema })
+  @ApiConflictResponse({ description: "Not a draft any more", standardSchema: errorResponseSchema })
+  update(
+    @Param("id") id: string,
+    @Body({ schema: broadcastContentSchema }) body: BroadcastContentBody,
+  ): Promise<BroadcastDto> {
+    return this.broadcasts.update(id, body);
+  }
+
+  @Post(":id/preview")
+  @HttpCode(204)
+  @ApiOperation({ summary: "Send the message to yourself only" })
+  @ApiNoContentResponse()
+  async preview(@Param("id") id: string, @CurrentAdmin() admin: User): Promise<void> {
+    await this.broadcasts.preview(id, admin);
+  }
+
+  @Post(":id/start")
+  @HttpCode(200)
+  @ApiOperation({ summary: "Start sending (DRAFT → QUEUED)" })
+  @ApiOkResponse({ standardSchema: broadcastProgressSchema })
+  @ApiConflictResponse({ description: "Not a draft", standardSchema: errorResponseSchema })
+  start(@Param("id") id: string): Promise<BroadcastProgressDto> {
+    return this.broadcasts.start(id);
+  }
+
+  @Post(":id/cancel")
+  @HttpCode(200)
+  @ApiOperation({ summary: "Cancel a draft, queued or running broadcast" })
+  @ApiOkResponse({ standardSchema: broadcastProgressSchema })
+  @ApiConflictResponse({ description: "Already finished", standardSchema: errorResponseSchema })
+  cancel(@Param("id") id: string): Promise<BroadcastProgressDto> {
+    return this.broadcasts.cancel(id);
+  }
+
+  /**
+   * Server-Sent Events: a `progress` event whenever the counters change, ending
+   * after a terminal status. Each event's data is a `BroadcastProgressDto`.
+   */
+  @Sse(":id/events")
+  @ApiOperation({ summary: "Progress stream (text/event-stream)" })
+  @ApiProduces("text/event-stream")
+  events(@Param("id") id: string): Observable<MessageEvent> {
+    return interval(PROGRESS_INTERVAL_MS).pipe(
+      startWith(0),
+      switchMap(() => from(this.broadcasts.progress(id))),
+      distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+      takeWhile((progress) => !isTerminal(progress.status), true),
+      map((progress) => ({ type: "progress", data: progress })),
+    );
+  }
+}
