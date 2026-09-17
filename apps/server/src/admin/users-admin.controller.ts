@@ -13,13 +13,15 @@ import {
   type Paginated,
   paginatedSchema,
   type UpdateUserBody,
+  type UserDetailDto,
   type UserDto,
   updateUserSchema,
+  userDetailSchema,
   userSchema,
 } from "@tgstack/shared";
 import { CurrentAdmin } from "../auth/admin.guard.js";
 import { AdminController } from "../common/admin-controller.decorator.js";
-import { type UserDetailDto, UsersAdminService } from "./users-admin.service.js";
+import { UsersAdminService } from "./users-admin.service.js";
 
 @AdminController("users", "admin: users")
 export class UsersAdminController {
@@ -36,6 +38,7 @@ export class UsersAdminController {
 
   @Get(":id")
   @ApiOperation({ summary: "A user with their recent payments" })
+  @ApiOkResponse({ standardSchema: userDetailSchema })
   @ApiNotFoundResponse({ standardSchema: errorResponseSchema })
   get(@Param("id") id: string): Promise<UserDetailDto> {
     return this.users.get(id);

@@ -5,6 +5,7 @@ import {
   queryBooleanSchema,
   telegramIdSchema,
 } from "./common.js";
+import { paymentSchema } from "./payments.js";
 
 export const roleSchema = z.enum(["USER", "ADMIN"]);
 export type Role = z.infer<typeof roleSchema>;
@@ -34,3 +35,13 @@ export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
 
 export const updateUserSchema = z.object({ role: roleSchema });
 export type UpdateUserBody = z.infer<typeof updateUserSchema>;
+
+/** A user with their latest payments (admin user drawer). */
+export const userDetailSchema = userSchema.extend({
+  payments: z.array(paymentSchema),
+  paymentsCount: z.number().int(),
+  totalSpentStars: z.number().int(),
+  /** EXAMPLE: onboarding answers, if any. */
+  onboarding: z.unknown(),
+});
+export type UserDetailDto = z.infer<typeof userDetailSchema>;

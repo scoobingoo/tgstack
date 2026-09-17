@@ -61,6 +61,7 @@ export function createBotInfo(overrides: Partial<UserFromGetMe> = {}): UserFromG
 export class MockBotApi {
   readonly calls: RecordedApiCall[] = [];
   private readonly factories = new Map<string, ApiResultFactory>();
+  private readonly listeners: ((call: RecordedApiCall) => void)[] = [];
   private readonly queue: Update[] = [];
   private nextMessageId = 1;
 
@@ -97,7 +98,10 @@ export class MockBotApi {
       payload: (payload ?? {}) as Record<string, any>,
       at: Date.now(),
     };
-    if (method !== "getUpdates") this.calls.push(call);
+    if (method !== "getUpdates") {
+      this.calls.push(call);
+      for (const listener of this.listeners) listener(call);
+    }
 
     const factory = this.factories.get(method);
     const result = factory
@@ -108,6 +112,12 @@ export class MockBotApi {
       return { ok: false, ...result.fixture };
     }
     return { ok: true, result };
+  }
+
+  /** Calls `listener` for every recorded call (e.g. to print what the bot "sends"). */
+  onCall(listener: (call: RecordedApiCall) => void): this {
+    this.listeners.push(listener);
+    return this;
   }
 
   /** Overrides the response of a method. */
