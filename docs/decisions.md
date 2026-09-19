@@ -136,3 +136,18 @@ Every non-obvious choice made while building tgstack. Format: **date — decisio
 - **Decision:** `apps/server` builds with plain `tsc`; `pnpm dev` runs one `tsc --watch` and `node --watch` for `main.js` and `main.worker.js` (via `concurrently`). The Nest CLI is not used.
 - **Reason:** two `nest start --watch` processes would fight over `dist/`; plain `tsc` is one less tool and emits the decorator metadata Nest needs.
 - **Alternatives:** Nest CLI with SWC builder; a second app package for the worker.
+
+## D28 — shadcn/ui with the Radix base and the "Nova" preset (2026-10-22)
+- **Decision:** `shadcn init -b radix -p nova`; vendored components live in `apps/admin/src/components/ui` (a few Biome rules are relaxed there). The CLI's `cn` helper package (maintained by shadcn) replaces `clsx` + `tailwind-merge`.
+- **Reason:** Radix primitives are the most widely documented shadcn base; Nova is the CLI default style. Keeping the generated files untouched makes `shadcn add` updates painless.
+- **Alternatives:** Base UI base (newer API, less familiar); hand-written components.
+
+## D29 — Mock-bot development mode (2026-10-22)
+- **Decision:** `pnpm --filter @tgstack/server dev:mock` runs the API and worker with `MockBotApi` and serves `GET /__dev/login-link`. It refuses `NODE_ENV=production` and the route only exists in that script.
+- **Reason:** the dashboard and its Playwright smoke tests must work without a real bot token or Telegram account.
+- **Alternatives:** a test-only HTTP endpoint inside the app (risk of shipping it), seeding sessions directly in Redis.
+
+## D30 — Admin talks to the API through its own origin (2026-10-22)
+- **Decision:** `/api/*` is rewritten to `NEXT_PUBLIC_API_URL` by Next.js in development and routed by the reverse proxy in production; the client never calls another origin.
+- **Reason:** keeps the session cookie first-party (`SameSite=Lax`, no CORS credentials juggling) and SSE works through the same path.
+- **Alternatives:** calling the API cross-origin with `credentials: "include"` (needs `SameSite=None; Secure` cookies and HTTPS everywhere).
