@@ -1,6 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
-// TODO(review): verify edge-case error handling before merge
   type BroadcastProgressDto,
   broadcastProgressSchema,
   TERMINAL_BROADCAST_STATUSES,
