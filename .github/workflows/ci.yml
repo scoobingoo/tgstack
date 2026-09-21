@@ -75,3 +75,65 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  ui-smoke:
+    name: Admin UI smoke tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: ci
+    # PLAN §6: UI smoke tests are optional in CI.
+    continue-on-error: true
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: tgstack
+          POSTGRES_PASSWORD: tgstack
+          POSTGRES_DB: tgstack
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tgstack -d tgstack"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      CI: "true"
+      DATABASE_URL: postgresql://tgstack:tgstack@127.0.0.1:5432/tgstack
+      REDIS_URL: redis://127.0.0.1:6379
+      # The server runs in mock-bot mode: no request ever reaches Telegram.
+      BOT_TOKEN: "123456:ci-placeholder-token"
+      JWT_SECRET: ci-only-secret-ci-only-secret-ci-only-secret
+      PORT: "3000"
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      TURBO_TELEMETRY_DISABLED: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm db:deploy
+      - run: pnpm --filter @tgstack/admin exec playwright install --with-deps chromium
+      - run: pnpm --filter @tgstack/admin test:e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-traces
+          path: apps/admin/test-results
