@@ -117,7 +117,7 @@ export async function seed(prisma: PrismaClient, options: SeedOptions = {}): Pro
             provider: "telegram-stars",
             telegramPaymentChargeId: `demo_charge_${i}`,
             invoicePayload: "demo",
-            createdAt: new Date(createdAt.getTime() + DAY / 2),
+            createdAt: new Date(Math.min(now, createdAt.getTime() + DAY / 2)),
           },
         });
         demoPayments++;

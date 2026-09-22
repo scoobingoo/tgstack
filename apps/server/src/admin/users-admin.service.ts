@@ -3,20 +3,12 @@ import type { Prisma, User } from "@tgstack/db";
 import type {
   ListUsersQuery,
   Paginated,
-  PaymentDto,
   UpdateUserBody,
+  UserDetailDto,
   UserDto,
 } from "@tgstack/shared";
 import { paymentInclude, toPaymentDto, toUserDto } from "../common/dto.js";
 import { PrismaService } from "../prisma/prisma.service.js";
-
-export interface UserDetailDto extends UserDto {
-  payments: PaymentDto[];
-  paymentsCount: number;
-  totalSpentStars: number;
-  /** EXAMPLE: onboarding answers, if any. */
-  onboarding: unknown;
-}
 
 const RECENT_PAYMENTS = 20;
 

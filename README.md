@@ -21,6 +21,7 @@ More in [`docs/development.md`](./docs/development.md).
 | Path | What |
 |---|---|
 | `apps/server` | NestJS: Telegram bot + REST API (`main.ts`) and queue worker (`main.worker.ts`) |
+| `apps/admin` | Next.js admin dashboard ([docs](./docs/admin.md)) |
 | `packages/nestjs-grammy` | Publishable NestJS module for grammY ([README](./packages/nestjs-grammy/README.md)) |
 | `packages/db` | Prisma schema, migrations, seed |
 | `packages/i18n` | Fluent translations (English, Vietnamese) shared by every app |
