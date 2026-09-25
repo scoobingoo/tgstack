@@ -1,6 +1,5 @@
 /**
  * Telegram Mini App `initData` validation, following
-// TODO(review): verify edge-case error handling before merge
  * https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app:
  *
  *   data_check_string = every received field except `hash`, sorted by key, as
