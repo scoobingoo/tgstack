@@ -12,6 +12,7 @@ import type { Env } from "./config/env.js";
 import { OnboardingModule } from "./examples/onboarding/onboarding.module.js";
 import { ShopModule } from "./examples/shop/shop.module.js";
 import { HealthModule } from "./health/health.module.js";
+import { MiniAppModule } from "./miniapp/miniapp.module.js";
 import { PaymentsModule } from "./payments/payments.module.js";
 import { PrismaModule } from "./prisma/prisma.module.js";
 import { RedisModule } from "./redis/redis.module.js";
@@ -42,6 +43,7 @@ export class AppModule {
         AdminModule,
         PaymentsModule,
         BroadcastsModule,
+        MiniAppModule,
         // EXAMPLE modules — delete freely (docs/examples.md).
         OnboardingModule,
         ShopModule,

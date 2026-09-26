@@ -151,3 +151,18 @@ Every non-obvious choice made while building tgstack. Format: **date — decisio
 - **Decision:** `/api/*` is rewritten to `NEXT_PUBLIC_API_URL` by Next.js in development and routed by the reverse proxy in production; the client never calls another origin.
 - **Reason:** keeps the session cookie first-party (`SameSite=Lax`, no CORS credentials juggling) and SSE works through the same path.
 - **Alternatives:** calling the API cross-origin with `credentials: "include"` (needs `SameSite=None; Secure` cookies and HTTPS everywhere).
+
+## D31 — Mini App UI: Tailwind + Telegram theme variables, no UI kit (2026-10-22)
+- **Decision:** the Mini App uses Tailwind CSS with colours mapped to the CSS variables tma.js binds from Telegram's theme (`--tg-theme-*`), plus native Back/Main buttons.
+- **Reason:** `@telegram-apps/telegram-ui` (the Telegram UI kit) only declares React 18 peers; the app uses React 19. A handful of Telegram-style components is enough for the example screens.
+- **Alternatives:** the UI kit with peer overrides; shadcn/ui (heavier, desktop-oriented).
+
+## D32 — initData validation with Web Crypto in `@tgstack/shared` (2026-10-22)
+- **Decision:** `validateInitData`/`signInitData` use `globalThis.crypto.subtle` (async) and a constant-time comparison written in TypeScript.
+- **Reason:** the same code runs in the server, in tests, in the Vite dev server (to sign mock data) and would run in browsers, without `node:crypto` breaking client bundles.
+- **Alternatives:** `node:crypto` in a server-only subpath.
+
+## D33 — Browser development of the Mini App with signed mock data (2026-10-22)
+- **Decision:** outside Telegram, `vite dev` mocks the Telegram environment with tma.js' `mockTelegramEnv` and a *real* initData signed by the dev server (`/__dev/init-data`, using `BOT_TOKEN` server-side). Production builds replace the mock module with an empty stub.
+- **Reason:** the real `MiniAppAuthGuard` stays in the loop during development — no auth bypass flag to forget in production — and the token never reaches the browser.
+- **Alternatives:** an "unsafe dev mode" switch in the server guard.
