@@ -1,0 +1,7 @@
+{
+  "extends": "@tgstack/config/tsconfig.react.json",
+  "compilerOptions": {
+    "types": ["vite/client"]
+  },
+  "include": ["src", "test"]
+}

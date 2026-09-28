@@ -2,12 +2,10 @@ import { performance } from "node:perf_hooks";
 import { type ConversationData, conversations, type VersionedState } from "@grammyjs/conversations";
 import { sequentialize } from "@grammyjs/runner";
 import { Injectable, Logger } from "@nestjs/common";
-import { negotiateLocale } from "@tgstack/i18n";
 import { Composer, type Middleware, type MiddlewareFn, session } from "grammy";
 import { Redis } from "ioredis";
-import { AppConfig } from "../config/app-config.js";
-import { PrismaService } from "../prisma/prisma.service.js";
 import { InjectRedis } from "../redis/redis.module.js";
+import { UsersService } from "../users/users.service.js";
 import type { BotContext, ConversationContext, SessionData } from "./bot.context.js";
 import { BotI18n } from "./bot-i18n.service.js";
 import { RedisStorage } from "./redis-storage.js";
@@ -26,8 +24,7 @@ export class BotMiddlewares {
   private readonly logger = new Logger("Bot");
 
   constructor(
-    private readonly config: AppConfig,
-    private readonly prisma: PrismaService,
+    private readonly users: UsersService,
     private readonly i18n: BotI18n,
     @InjectRedis() private readonly redis: Redis,
   ) {}
@@ -88,33 +85,23 @@ export class BotMiddlewares {
    * Updates without a human sender (channel posts, other bots) stop here.
    */
   upsertUser(): MiddlewareFn<BotContext> {
-    const adminIds = new Set(this.config.env.ADMIN_TELEGRAM_IDS);
     return async (ctx, next) => {
       const from = ctx.from;
       if (!from || from.is_bot) return;
 
-      const telegramId = BigInt(from.id);
       // A private-chat `my_chat_member` update tells us whether the user blocked the bot.
       const member = ctx.myChatMember?.chat.type === "private" ? ctx.myChatMember : undefined;
-      const isBlocked = member?.new_chat_member.status === "kicked";
-      const profile = {
-        username: from.username ?? null,
-        firstName: from.first_name,
-        lastName: from.last_name ?? null,
-        languageCode: from.language_code ?? null,
-      };
-
-      ctx.user = await this.prisma.user.upsert({
-        where: { telegramId },
-        create: {
-          telegramId,
-          ...profile,
-          locale: negotiateLocale(from.language_code),
-          role: adminIds.has(telegramId) ? "ADMIN" : "USER",
-          isBlocked,
+      ctx.user = await this.users.upsertFromTelegram(
+        {
+          id: from.id,
+          firstName: from.first_name,
+          lastName: from.last_name,
+          username: from.username,
+          languageCode: from.language_code,
         },
-        update: { ...profile, isBlocked, lastSeenAt: new Date() },
-      });
+        // Any update from the user means they have not blocked the bot (any more).
+        { isBlocked: member?.new_chat_member.status === "kicked" },
+      );
 
       if (member) return; // nothing to answer to a block/unblock
       await next();

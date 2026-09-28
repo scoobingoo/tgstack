@@ -13,5 +13,9 @@ Anything that is out of scope for v1.0 (see `PLAN.md` § 1 and § 4 Phase 9) or 
 ## Tooling
 - Move to TypeScript 7 once NestJS tooling (`@nestjs/swagger`, `@nestjs/cli`) declares support (see D7).
 
+## Performance
+- Mini App bundle is ~200 kB gzipped (zod schemas, tma.js, translations of every namespace). Try `zod/mini` for the client, per-namespace translation chunks, and code-splitting the shop example.
+- Cancelling a large broadcast leaves its queued jobs in BullMQ; they are skipped but still pass through the rate limiter. Remove them in bulk on cancel.
+
 ## Good first issues
 _Populated in Phase 8 (T8.3)._

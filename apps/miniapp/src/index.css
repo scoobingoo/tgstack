@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/*
+ * Telegram passes its theme as CSS variables (themeParams.bindCssVars()), so the
+ * app follows the user's light/dark theme. Fallbacks are used outside Telegram.
+ */
+@theme inline {
+  --color-tg-bg: var(--tg-theme-bg-color, #ffffff);
+  --color-tg-text: var(--tg-theme-text-color, #000000);
+  --color-tg-hint: var(--tg-theme-hint-color, #707579);
+  --color-tg-link: var(--tg-theme-link-color, #2481cc);
+  --color-tg-button: var(--tg-theme-button-color, #2481cc);
+  --color-tg-button-text: var(--tg-theme-button-text-color, #ffffff);
+  --color-tg-secondary: var(--tg-theme-secondary-bg-color, #f1f1f4);
+  --color-tg-section: var(--tg-theme-section-bg-color, #ffffff);
+  --color-tg-section-header: var(--tg-theme-section-header-text-color, #6d6d72);
+  --color-tg-separator: var(--tg-theme-section-separator-color, #e7e7e7);
+  --color-tg-accent: var(--tg-theme-accent-text-color, #2481cc);
+  --color-tg-destructive: var(--tg-theme-destructive-text-color, #e53935);
+  --color-tg-bottom-bar: var(--tg-theme-bottom-bar-bg-color, var(--tg-theme-bg-color, #ffffff));
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--tg-theme-secondary-bg-color, #f1f1f4);
+  color: var(--tg-theme-text-color, #000000);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
