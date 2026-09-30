@@ -40,6 +40,13 @@ admin-link =
     { $url }
 admin-link-button = Mở trang quản trị
 
+payment-thanks = 🎉 Cảm ơn bạn! Chúng mình đã nhận { $amount } ⭐ cho “{ $title }”.
+payment-thanks-generic = 🎉 Cảm ơn bạn! Chúng mình đã nhận { $amount } ⭐.
+payment-error-invalid = Hoá đơn này không còn hợp lệ. Vui lòng thử lại từ đầu.
+payment-error-unavailable = Rất tiếc, sản phẩm này không còn bán nữa.
+payment-error-price-changed = Giá đã thay đổi. Vui lòng mở lại sản phẩm.
+payment-error-generic = Không thể xử lý thanh toán. Vui lòng thử lại.
+
 ## VÍ DỤ: trình hướng dẫn làm quen (apps/server/src/examples/onboarding)
 
 onboarding-ask-name = Mình nên gọi bạn là gì? Hãy gửi tên của bạn, hoặc /cancel.
@@ -57,3 +64,8 @@ onboarding-confirm-no = ↩️ Làm lại
 onboarding-saved = 🎉 Xong rồi, { $name }! Hồ sơ của bạn đã được lưu.
 onboarding-restart = Không sao, mình làm lại từ đầu nhé.
 onboarding-use-buttons = Vui lòng dùng các nút ở trên, hoặc /cancel.
+
+## VÍ DỤ: cửa hàng (apps/server/src/examples/shop)
+
+shop-choose = 🛍 Bạn muốn mua gì?
+shop-empty = Hiện chưa có sản phẩm nào.

@@ -227,7 +227,7 @@ describe("boot", () => {
       ["vi", 999],
     ]);
     const publicCommands = calls[0]?.payload.commands.map((c: { command: string }) => c.command);
-    expect(publicCommands).toEqual(["start", "help", "language", "onboarding", "cancel"]);
+    expect(publicCommands).toEqual(["start", "help", "language", "onboarding", "buy", "cancel"]);
     expect(calls[2]?.payload.commands[1]).toEqual({ command: "help", description: "Xem trợ giúp" });
     // http:// Mini App URL → no menu button.
     expect(t.api.callsTo("setChatMenuButton")).toHaveLength(0);

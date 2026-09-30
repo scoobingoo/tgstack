@@ -41,6 +41,8 @@ export const envSchema = z
       .regex(/^[\w-]{1,256}$/, "must be 1-256 characters of A-Z, a-z, 0-9, _ or -")
       .optional(),
     BOT_AUTO_SET_WEBHOOK: z.stringbool().default(false),
+    /** Use Telegram's test environment (test accounts, free test payments). */
+    BOT_TEST_ENVIRONMENT: z.stringbool().default(false),
 
     ADMIN_TELEGRAM_IDS: telegramIds,
     JWT_SECRET: z

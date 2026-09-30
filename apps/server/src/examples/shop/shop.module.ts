@@ -4,12 +4,13 @@ import { Module } from "@nestjs/common";
 import { MiniAppModule } from "../../miniapp/miniapp.module.js";
 import { ProductsService } from "./products.service.js";
 import { ProductsAdminController } from "./products-admin.controller.js";
+import { ShopUpdate } from "./shop.update.js";
 import { ShopAppController } from "./shop-app.controller.js";
 
 @Module({
   imports: [MiniAppModule],
   controllers: [ProductsAdminController, ShopAppController],
-  providers: [ProductsService],
+  providers: [ProductsService, ShopUpdate],
   exports: [ProductsService],
 })
 export class ShopModule {}

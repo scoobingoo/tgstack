@@ -67,7 +67,10 @@ export class BotModule {
               botConfig: {
                 ...(options.botInfo ? { botInfo: options.botInfo } : {}),
                 // The client options also reach the Api instances conversations create.
-                client: options.client ?? (config.isTest ? { fetch: blockedFetch } : {}),
+                client: {
+                  ...(options.client ?? (config.isTest ? { fetch: blockedFetch } : {})),
+                  ...(env.BOT_TEST_ENVIRONMENT ? { environment: "test" as const } : {}),
+                },
               },
               transformers: [autoRetry({ maxRetryAttempts: 3, maxDelaySeconds: 30 })],
               middlewares: middlewares.create(),

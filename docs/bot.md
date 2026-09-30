@@ -12,8 +12,9 @@ Every update goes through these steps, in order (`bot-middlewares.service.ts`):
 4. **User upsert** — creates/updates the `User` row and exposes it as `ctx.user`. Sets `lastSeenAt`, clears `isBlocked`, and sets `isBlocked=true` when the user blocks the bot (`my_chat_member` → `kicked`). Updates without a human sender stop here.
 5. **Session** — `ctx.session`, stored in Redis (`bot:session:<chat>`, 30-day TTL). Add fields to `SessionData` in `bot.context.ts`.
 6. **i18n** — `ctx.t(key)`, see below.
-7. **Conversations** — `@grammyjs/conversations` with state in Redis, so a conversation survives restarts and works across instances.
-8. **`/cancel`** — leaves any active conversation. It must run before conversations resume, so it is middleware rather than a handler.
+7. **Before conversations** — `BotMiddlewares.beforeConversations`, for handlers that must run even while a conversation is active (payments: `pre_checkout_query`, `successful_payment`). An active conversation consumes every update of its chat.
+8. **Conversations** — `@grammyjs/conversations` with state in Redis, so a conversation survives restarts and works across instances.
+9. **`/cancel`** — leaves any active conversation. It must run before conversations resume, so it is middleware rather than a handler.
 
 Then the `@Update()` handlers run. API calls are retried on `429`/`5xx` by `@grammyjs/auto-retry`.
 
