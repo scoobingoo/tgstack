@@ -42,7 +42,7 @@ export class PaymentsBotHandlers implements OnModuleInit {
         invoicePayload: query.invoice_payload,
       });
       if (decision.ok) {
-        await ctx.answerPreCheckoutQuery(false);
+        await ctx.answerPreCheckoutQuery(true);
       } else {
         await ctx.answerPreCheckoutQuery(false, {
           error_message: ctx.t(`payment-error-${decision.reason}`),
