@@ -16,12 +16,19 @@ const CONVERSATION_TTL_SECONDS = 7 * 24 * 60 * 60;
 /**
  * Builds the global middleware pipeline, in order (PLAN T2.3):
  * (error boundary, installed by nestjs-grammy) → per-chat ordering → logging →
- * user upsert → session (Redis) → i18n → conversations (Redis) → /cancel.
+ * user upsert → session (Redis) → i18n → {@link beforeConversations} → conversations (Redis) → /cancel.
  * API calls are retried by the auto-retry transformer (see bot.module.ts).
  */
 @Injectable()
 export class BotMiddlewares {
   private readonly logger = new Logger("Bot");
+
+  /**
+   * Handlers that must see their updates even while a conversation is active
+   * (an active conversation consumes every update of its chat), e.g. payments.
+   * Feature modules add to it in `onModuleInit`.
+   */
+  readonly beforeConversations = new Composer<BotContext>();
 
   constructor(
     private readonly users: UsersService,
@@ -41,6 +48,7 @@ export class BotMiddlewares {
         storage: new RedisStorage<SessionData>(this.redis, "bot:session:", SESSION_TTL_SECONDS),
       }),
       this.i18n.i18n,
+      this.beforeConversations,
       conversations<BotContext, ConversationContext>({
         storage: {
           type: "key",

@@ -166,3 +166,13 @@ Every non-obvious choice made while building tgstack. Format: **date — decisio
 - **Decision:** outside Telegram, `vite dev` mocks the Telegram environment with tma.js' `mockTelegramEnv` and a *real* initData signed by the dev server (`/__dev/init-data`, using `BOT_TOKEN` server-side). Production builds replace the mock module with an empty stub.
 - **Reason:** the real `MiniAppAuthGuard` stays in the loop during development — no auth bypass flag to forget in production — and the token never reaches the browser.
 - **Alternatives:** an "unsafe dev mode" switch in the server guard.
+
+## D34 — Payment updates are handled before the conversations plugin (2026-10-22)
+- **Decision:** `pre_checkout_query` and `successful_payment` handlers are registered on `BotMiddlewares.beforeConversations`, a composer that runs before `conversations()`, instead of as `@Update()` handlers.
+- **Reason:** an active conversation consumes every update of its chat; a user paying while the onboarding wizard waits for their name would otherwise never get the payment recorded.
+- **Alternatives:** asking every conversation to `skip()` payment updates (easy to forget).
+
+## D35 — `BOT_TEST_ENVIRONMENT` (2026-10-22)
+- **Decision:** a boolean env var switches grammY's client to Telegram's test environment for the bot and the worker.
+- **Reason:** PLAN T7.2 asks for a documented manual payment test in Telegram's test environment; without it the documented steps could not be followed.
+- **Alternatives:** documenting only small real-Star payments.

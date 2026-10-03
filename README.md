@@ -27,7 +27,7 @@ More in [`docs/development.md`](./docs/development.md).
 | `packages/db` | Prisma schema, migrations, seed |
 | `packages/i18n` | Fluent translations (English, Vietnamese) shared by every app |
 | `packages/shared` | Code shared by server and frontends |
-| `docs/` | [Development](./docs/development.md) · [Bot](./docs/bot.md) · [Admin API](./docs/admin-api.md) · [Broadcasts](./docs/broadcasts.md) · [Examples](./docs/examples.md) · [Decisions](./docs/decisions.md) |
+| `docs/` | [Development](./docs/development.md) · [Bot](./docs/bot.md) · [Admin API](./docs/admin-api.md) · [Broadcasts](./docs/broadcasts.md) · [Mini App](./docs/miniapp.md) · [Payments](./docs/payments.md) · [Examples](./docs/examples.md) · [Decisions](./docs/decisions.md) |
 
 ## License
 

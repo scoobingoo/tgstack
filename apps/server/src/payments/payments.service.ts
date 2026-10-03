@@ -37,6 +37,17 @@ export class PaymentsService {
     return provider;
   }
 
+  /**
+   * The provider that handles Telegram-native payments in `currency`
+   * (`XTR` → Telegram Stars). Used for `pre_checkout_query` and `successful_payment`.
+   */
+  getProviderForCurrency(currency: string): PaymentProvider {
+    const provider = [...this.providers.values()].find((p) => p.currency === currency);
+    if (!provider)
+      throw new ServiceUnavailableException(`No payment provider for currency ${currency}`);
+    return provider;
+  }
+
   async list(query: ListPaymentsQuery): Promise<Paginated<PaymentDto>> {
     const where: Prisma.PaymentWhereInput = {
       ...(query.status ? { status: query.status } : {}),

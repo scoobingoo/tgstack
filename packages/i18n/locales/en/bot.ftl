@@ -40,6 +40,13 @@ admin-link =
     { $url }
 admin-link-button = Open the dashboard
 
+payment-thanks = 🎉 Thank you! We received { $amount } ⭐ for “{ $title }”.
+payment-thanks-generic = 🎉 Thank you! We received { $amount } ⭐.
+payment-error-invalid = This invoice is no longer valid. Please start again.
+payment-error-unavailable = Sorry, this product is no longer available.
+payment-error-price-changed = The price has changed. Please open the product again.
+payment-error-generic = The payment could not be processed. Please try again.
+
 ## EXAMPLE: onboarding wizard (apps/server/src/examples/onboarding)
 
 onboarding-ask-name = What should I call you? Send me your name, or /cancel.
@@ -57,3 +64,8 @@ onboarding-confirm-no = ↩️ Start over
 onboarding-saved = 🎉 All set, { $name }! Your profile has been saved.
 onboarding-restart = No problem, let's start over.
 onboarding-use-buttons = Please use the buttons above, or /cancel.
+
+## EXAMPLE: shop (apps/server/src/examples/shop)
+
+shop-choose = 🛍 What would you like to buy?
+shop-empty = Nothing is for sale right now.

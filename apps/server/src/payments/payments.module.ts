@@ -2,6 +2,7 @@ import { Global, Module } from "@nestjs/common";
 import { PAYMENT_PROVIDERS, type PaymentProvider } from "./payment-provider.js";
 import { PaymentsService } from "./payments.service.js";
 import { PaymentsAdminController } from "./payments-admin.controller.js";
+import { PaymentsBotHandlers } from "./payments-bot.handlers.js";
 import { TelegramStarsProvider } from "./telegram-stars.provider.js";
 
 /**
@@ -19,6 +20,7 @@ import { TelegramStarsProvider } from "./telegram-stars.provider.js";
       useFactory: (...providers: PaymentProvider[]) => providers,
     },
     PaymentsService,
+    PaymentsBotHandlers,
   ],
   exports: [PaymentsService, TelegramStarsProvider],
 })

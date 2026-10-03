@@ -25,7 +25,11 @@ export class BroadcastWorkerModule {
           // A bare API client: no polling, no auto-retry (the worker handles 429 itself).
           provide: WORKER_BOT_API,
           inject: [AppConfig],
-          useFactory: (config: AppConfig) => new Api(config.env.BOT_TOKEN, client),
+          useFactory: (config: AppConfig) =>
+            new Api(config.env.BOT_TOKEN, {
+              ...client,
+              ...(config.env.BOT_TEST_ENVIRONMENT ? { environment: "test" as const } : {}),
+            }),
         },
         { provide: BROADCAST_WORKER_OPTIONS, useValue: workerOptions },
         BroadcastWorker,
