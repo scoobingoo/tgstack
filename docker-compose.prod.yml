@@ -1,0 +1,148 @@
+# Production stack for a single VPS (docs/deployment.md):
+#   Caddy (automatic HTTPS) → server (API + bot webhook), admin, Mini App
+#   worker (broadcasts), Postgres, Redis, and a one-off `migrate` job.
+#
+#   cp .env.example .env    # set DOMAIN, BOT_TOKEN, secrets…
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Images are built on the server by default. To use prebuilt images from a registry,
+# set TGSTACK_IMAGE (e.g. ghcr.io/you/tgstack) and TGSTACK_TAG, then
+#   docker compose -f docker-compose.prod.yml pull && docker compose -f docker-compose.prod.yml up -d --no-build
+name: tgstack-prod
+
+x-app-env: &app-env
+  NODE_ENV: production
+  HOST: 0.0.0.0
+  PORT: "3000"
+  DATABASE_URL: postgresql://${POSTGRES_USER:-tgstack}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-tgstack}
+  REDIS_URL: redis://redis:6379
+  ADMIN_URL: https://${DOMAIN:?set DOMAIN in .env}
+  MINIAPP_URL: https://${DOMAIN}/app/
+  BOT_MODE: webhook
+  BOT_WEBHOOK_URL: https://${DOMAIN}
+  BOT_AUTO_SET_WEBHOOK: "true"
+
+x-app: &app
+  restart: unless-stopped
+  # BOT_TOKEN, BOT_WEBHOOK_SECRET, JWT_SECRET, ADMIN_TELEGRAM_IDS, … come from .env;
+  # the values in `environment` win.
+  env_file: .env
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    migrate:
+      condition: service_completed_successfully
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - server
+      - admin
+      - miniapp
+
+  server:
+    <<: *app
+    image: ${TGSTACK_IMAGE:-tgstack}-server:${TGSTACK_TAG:-local}
+    build:
+      context: .
+      dockerfile: docker/server.Dockerfile
+      target: runtime
+    environment: *app-env
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  worker:
+    <<: *app
+    image: ${TGSTACK_IMAGE:-tgstack}-server:${TGSTACK_TAG:-local}
+    command: ["node", "dist/main.worker.js"]
+    environment: *app-env
+
+  migrate:
+    image: ${TGSTACK_IMAGE:-tgstack}-migrate:${TGSTACK_TAG:-local}
+    build:
+      context: .
+      dockerfile: docker/server.Dockerfile
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tgstack}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-tgstack}
+      ADMIN_TELEGRAM_IDS: ${ADMIN_TELEGRAM_IDS:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  admin:
+    image: ${TGSTACK_IMAGE:-tgstack}-admin:${TGSTACK_TAG:-local}
+    build:
+      context: .
+      dockerfile: docker/admin.Dockerfile
+      args:
+        NEXT_PUBLIC_BOT_USERNAME: ${NEXT_PUBLIC_BOT_USERNAME:-}
+    restart: unless-stopped
+
+  miniapp:
+    image: ${TGSTACK_IMAGE:-tgstack}-miniapp:${TGSTACK_TAG:-local}
+    build:
+      context: .
+      dockerfile: docker/miniapp.Dockerfile
+      args:
+        MINIAPP_BASE_PATH: /app/
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tgstack}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-tgstack}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    # noeviction: BullMQ must never lose queue keys under memory pressure.
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:
+  caddy-data:
+  caddy-config:

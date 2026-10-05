@@ -58,5 +58,8 @@
     "typescript": "6.0.3",
     "unplugin-swc": "^2.0.0",
     "vitest": "^5.0.5"
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }

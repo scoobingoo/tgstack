@@ -1,0 +1,29 @@
+# Production reverse proxy with automatic HTTPS (Let's Encrypt).
+#   /api/*, /telegram/*, /health  → server (API, bot webhook)
+#   /app/*                        → Mini App (static)
+#   everything else               → admin dashboard
+{$DOMAIN} {
+	encode zstd gzip
+
+	handle /api/* {
+		# flush_interval -1: stream Server-Sent Events (broadcast progress) immediately.
+		reverse_proxy server:3000 {
+			flush_interval -1
+		}
+	}
+	handle /telegram/* {
+		reverse_proxy server:3000
+	}
+	handle /health {
+		reverse_proxy server:3000
+	}
+
+	redir /app /app/
+	handle /app/* {
+		reverse_proxy miniapp:80
+	}
+
+	handle {
+		reverse_proxy admin:3000
+	}
+}
