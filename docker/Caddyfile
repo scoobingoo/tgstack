@@ -19,7 +19,7 @@
 	}
 
 	redir /app /app/
-	handle /app/* {
+	handle_path /app/* {
 		reverse_proxy miniapp:80
 	}
 
