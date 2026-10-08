@@ -1,0 +1,75 @@
+name: Release images
+
+# Pushing a tag like v1.2.3 builds the four images and pushes them to GHCR:
+#   ghcr.io/<owner>/tgstack-{server,migrate,admin,miniapp}:{1.2.3,1.2,latest,sha-…}
+# docker-compose.prod.yml uses them with TGSTACK_IMAGE=ghcr.io/<owner>/tgstack TGSTACK_TAG=1.2.3.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: server
+            dockerfile: docker/server.Dockerfile
+            target: runtime
+          - image: migrate
+            dockerfile: docker/server.Dockerfile
+            target: migrate
+          - image: admin
+            dockerfile: docker/admin.Dockerfile
+            target: runtime
+          - image: miniapp
+            dockerfile: docker/miniapp.Dockerfile
+            target: runtime
+    steps:
+      - uses: actions/checkout@v7
+
+      # Image names must be lowercase; repository owners may not be.
+      - name: Image name
+        id: name
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/tgstack-${{ matrix.image }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ steps.name.outputs.image }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}

@@ -1,8 +1,36 @@
 # Development infrastructure: Postgres + Redis.
 #   docker compose up -d --wait
-# The full application stack (server, worker, admin, miniapp) is added in Phase 8
-# behind the `full` profile.
+#
+# `full` profile: also builds and runs the whole app in containers behind Caddy on
+# http://localhost:8080 (admin at /, Mini App at /app/, API at /api). Needs a real
+# BOT_TOKEN in .env; the bot uses long polling.
+#   docker compose --profile full up -d --build
+# For production use docker-compose.prod.yml (docs/deployment.md).
 name: tgstack
+
+x-app-env: &app-env
+  NODE_ENV: production
+  HOST: 0.0.0.0
+  PORT: "3000"
+  DATABASE_URL: postgresql://${POSTGRES_USER:-tgstack}:${POSTGRES_PASSWORD:-tgstack}@postgres:5432/${POSTGRES_DB:-tgstack}
+  REDIS_URL: redis://redis:6379
+  ADMIN_URL: http://localhost:${FULL_STACK_PORT:-8080}
+  MINIAPP_URL: http://localhost:${FULL_STACK_PORT:-8080}/app/
+  BOT_MODE: polling
+
+x-app: &app
+  profiles: [full]
+  restart: unless-stopped
+  env_file:
+    - path: .env
+      required: false
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    migrate:
+      condition: service_completed_successfully
 
 services:
   postgres:
@@ -38,6 +66,84 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # ── `full` profile ─────────────────────────────────────────────────────────
+  migrate:
+    profiles: [full]
+    image: tgstack-migrate:local
+    build:
+      context: .
+      dockerfile: docker/server.Dockerfile
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tgstack}:${POSTGRES_PASSWORD:-tgstack}@postgres:5432/${POSTGRES_DB:-tgstack}
+      ADMIN_TELEGRAM_IDS: ${ADMIN_TELEGRAM_IDS:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  server:
+    <<: *app
+    image: tgstack-server:local
+    build:
+      context: .
+      dockerfile: docker/server.Dockerfile
+      target: runtime
+    environment: *app-env
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  worker:
+    <<: *app
+    image: tgstack-server:local
+    command: ["node", "dist/main.worker.js"]
+    environment: *app-env
+
+  admin:
+    profiles: [full]
+    image: tgstack-admin:local
+    build:
+      context: .
+      dockerfile: docker/admin.Dockerfile
+      args:
+        NEXT_PUBLIC_BOT_USERNAME: ${NEXT_PUBLIC_BOT_USERNAME:-}
+    restart: unless-stopped
+
+  miniapp:
+    profiles: [full]
+    image: tgstack-miniapp:local
+    build:
+      context: .
+      dockerfile: docker/miniapp.Dockerfile
+      args:
+        MINIAPP_BASE_PATH: /app/
+    restart: unless-stopped
+
+  caddy:
+    profiles: [full]
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      # A bare port: plain HTTP on any host name, no certificates.
+      DOMAIN: ":80"
+    ports:
+      - "${FULL_STACK_PORT:-8080}:80"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - server
+      - admin
+      - miniapp
 
 volumes:
   postgres-data:

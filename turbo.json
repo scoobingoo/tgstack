@@ -7,7 +7,7 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "src/generated/**"],
-      "env": ["NEXT_PUBLIC_*", "VITE_*"]
+      "env": ["NEXT_PUBLIC_*", "VITE_*", "MINIAPP_BASE_PATH"]
     },
     "typecheck": {
       "dependsOn": ["^build"]
