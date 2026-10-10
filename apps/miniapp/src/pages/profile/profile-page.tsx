@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LOCALE_LABELS, type Locale, SUPPORTED_LOCALES } from "@tgstack/i18n";
-import { useApp } from "../app-context";
-import { Section, Spinner, Toast } from "../components/ui";
+import { useApp } from "../../app/app-context";
+import { Section, Spinner, Toast } from "../../components/ui";
 
 export function ProfilePage() {
   const { api, me, locale, t } = useApp();

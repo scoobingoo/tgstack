@@ -11,8 +11,8 @@ import {
 import { TelegramExecutionContext } from "@tgstack/nestjs-grammy";
 import type { Request, Response } from "express";
 import { ZodError } from "zod";
-import type { BotContext } from "../bot/bot.context.js";
-import { BotErrorHandler } from "../bot/bot-errors.js";
+import type { BotContext } from "../../bot/bot.context.js";
+import { BotErrorHandler } from "../../bot/middlewares/error-boundary.js";
 
 export interface ErrorBody {
   statusCode: number;

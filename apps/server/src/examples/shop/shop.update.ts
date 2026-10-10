@@ -4,7 +4,7 @@ import { CallbackQuery, Command, Ctx, Update } from "@tgstack/nestjs-grammy";
 import { InlineKeyboard } from "grammy";
 import type { BotContext } from "../../bot/bot.context.js";
 import { BotCommandsRegistry } from "../../bot/bot-commands.registry.js";
-import { TelegramStarsProvider } from "../../payments/telegram-stars.provider.js";
+import { TelegramStarsProvider } from "../../modules/payments/providers/telegram-stars.provider.js";
 import { ProductsService } from "./products.service.js";
 
 export const BUY_CALLBACK = /^buy:([\w-]+)$/;

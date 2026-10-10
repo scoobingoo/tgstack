@@ -1,11 +1,11 @@
 // EXAMPLE: shop — product list → product → pay with Telegram Stars.
-// Delete this folder and its tab in App.tsx to remove it (docs/examples.md).
+// Delete this folder and its tab in src/app/App.tsx to remove it (docs/examples.md).
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { ProductDto } from "@tgstack/shared";
 import { invoice } from "@tma.js/sdk-react";
 import { ChevronRightIcon, StarIcon } from "lucide-react";
 import { useState } from "react";
-import { useApp } from "../../app-context";
+import { useApp } from "../../app/app-context";
 import { ErrorView, Section, Spinner, Toast } from "../../components/ui";
 import { useBackButton, useMainButton } from "../../hooks/use-telegram-buttons";
 

@@ -13,10 +13,10 @@ import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { MockBotApi } from "@tgstack/nestjs-grammy/testing";
 import { AppModule } from "../app.module.js";
-import { AuthService } from "../auth/auth.service.js";
 import { configureApp, exitOnBootstrapError } from "../bootstrap.js";
 import { loadEnv } from "../config/env.js";
-import { PrismaService } from "../prisma/prisma.service.js";
+import { PrismaService } from "../infra/prisma/prisma.service.js";
+import { AuthService } from "../modules/auth/auth.service.js";
 import { WorkerModule } from "../worker.module.js";
 
 const MOCK_ADMIN_TELEGRAM_ID = 111_111_111n;

@@ -9,7 +9,7 @@ import { escapeHtml } from "@tgstack/shared";
 import { type Bot, InlineKeyboard } from "grammy";
 import type { BotContext, ConversationContext } from "../../bot/bot.context.js";
 import { BotCommandsRegistry } from "../../bot/bot-commands.registry.js";
-import { PrismaService } from "../../prisma/prisma.service.js";
+import { PrismaService } from "../../infra/prisma/prisma.service.js";
 
 export const ONBOARDING_CONVERSATION = "onboarding";
 

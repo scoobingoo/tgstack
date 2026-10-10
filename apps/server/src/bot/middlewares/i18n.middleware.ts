@@ -7,7 +7,8 @@ import {
   negotiateLocale,
   SUPPORTED_LOCALES,
 } from "@tgstack/i18n";
-import type { BotContext } from "./bot.context.js";
+import type { MiddlewareObj } from "grammy";
+import type { BotContext } from "../bot.context.js";
 
 /**
  * The bot's i18n plugin, fed from `@tgstack/i18n` (`locales/<locale>/bot.ftl`).
@@ -28,6 +29,11 @@ export class BotI18n {
     for (const locale of SUPPORTED_LOCALES) {
       this.i18n.loadLocaleSync(locale, { source: getSource(locale, "bot") });
     }
+  }
+
+  /** The middleware that negotiates the locale of each update and adds `ctx.t`. */
+  middleware(): MiddlewareObj<BotContext> {
+    return this.i18n;
   }
 
   /** Translates outside of an update, e.g. for `setMyCommands` or queued messages. */

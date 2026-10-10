@@ -1,12 +1,10 @@
 import { Module } from "@nestjs/common";
 import { StatsController } from "./stats.controller.js";
 import { StatsService } from "./stats.service.js";
-import { UsersAdminController } from "./users-admin.controller.js";
-import { UsersAdminService } from "./users-admin.service.js";
 
-/** `/api/admin/*` endpoints of the dashboard (every controller uses `@AdminController`). */
+/** Dashboard metrics: `GET /api/admin/stats`. */
 @Module({
-  controllers: [StatsController, UsersAdminController],
-  providers: [StatsService, UsersAdminService],
+  controllers: [StatsController],
+  providers: [StatsService],
 })
-export class AdminModule {}
+export class StatsModule {}

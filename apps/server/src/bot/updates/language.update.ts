@@ -1,7 +1,7 @@
 import { isLocale, LOCALE_LABELS, SUPPORTED_LOCALES } from "@tgstack/i18n";
 import { CallbackQuery, Command, Ctx, Update } from "@tgstack/nestjs-grammy";
 import { InlineKeyboard } from "grammy";
-import { PrismaService } from "../../prisma/prisma.service.js";
+import { PrismaService } from "../../infra/prisma/prisma.service.js";
 import type { BotContext } from "../bot.context.js";
 
 export const LANGUAGE_CALLBACK = /^lang:([a-z]{2})$/;

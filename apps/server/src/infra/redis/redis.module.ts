@@ -7,7 +7,7 @@ import {
   type OnApplicationShutdown,
 } from "@nestjs/common";
 import { Redis, type RedisOptions } from "ioredis";
-import { AppConfig } from "../config/app-config.js";
+import { AppConfig } from "../../config/app-config.js";
 
 /** Injection token of the shared ioredis client. Use `@InjectRedis()`. */
 export const REDIS = Symbol("REDIS");

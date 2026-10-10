@@ -1,8 +1,8 @@
 import { ShoppingBagIcon, UserIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { ProfilePage } from "../pages/profile/profile-page";
+import { ShopPage } from "../pages/shop/shop-page";
 import { useApp } from "./app-context";
-import { ShopPage } from "./examples/shop/shop-page";
-import { ProfilePage } from "./pages/profile-page";
 
 type Tab = "shop" | "profile";
 

@@ -3,7 +3,6 @@
 import { ExternalLinkIcon, KeyRoundIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { LocaleSwitch, ThemeToggle } from "@/components/header-controls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useT } from "@/lib/i18n";
@@ -50,14 +49,8 @@ function LoginCard() {
 
 export default function LoginPage() {
   return (
-    <main className="relative flex min-h-svh items-center justify-center bg-muted/40 p-4">
-      <div className="absolute top-4 right-4 flex gap-1">
-        <LocaleSwitch />
-        <ThemeToggle />
-      </div>
-      <Suspense>
-        <LoginCard />
-      </Suspense>
-    </main>
+    <Suspense>
+      <LoginCard />
+    </Suspense>
   );
 }

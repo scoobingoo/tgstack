@@ -1,6 +1,6 @@
 import type { INestApplication } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { SESSION_COOKIE } from "../auth/auth.service.js";
+import { SESSION_COOKIE } from "@tgstack/shared";
 
 /**
  * OpenAPI spec at `/api/docs` (UI) and `/api/docs-json`. Development only.

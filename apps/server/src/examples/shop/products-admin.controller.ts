@@ -19,7 +19,7 @@ import {
   type UpdateProductBody,
   updateProductSchema,
 } from "@tgstack/shared";
-import { AdminController } from "../../common/admin-controller.decorator.js";
+import { AdminController } from "../../common/decorators/admin-controller.decorator.js";
 import { ProductsService } from "./products.service.js";
 
 @AdminController("products", "admin: products (example)")

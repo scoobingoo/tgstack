@@ -24,7 +24,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@fluent/bundle": "^0.19.1"
+    "@fluent/bundle": "^0.19.1",
+    "@tgstack/shared": "workspace:*"
   },
   "devDependencies": {
     "@tgstack/config": "workspace:*",

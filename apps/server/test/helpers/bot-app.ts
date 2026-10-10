@@ -6,8 +6,8 @@ import type { Bot } from "grammy";
 import type { Update, User } from "grammy/types";
 import type { Redis } from "ioredis";
 import type { BotContext } from "../../src/bot/bot.context.js";
-import { PrismaService } from "../../src/prisma/prisma.service.js";
-import { REDIS } from "../../src/redis/redis.module.js";
+import { PrismaService } from "../../src/infra/prisma/prisma.service.js";
+import { REDIS } from "../../src/infra/redis/redis.module.js";
 import { createTestApp } from "./app.js";
 import { createTestEnv } from "./env.js";
 

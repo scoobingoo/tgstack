@@ -6,7 +6,7 @@ import {
   assertAction,
   canTransition,
   isTerminal,
-} from "../src/broadcasts/broadcast-state.js";
+} from "../src/modules/broadcasts/broadcast-state.js";
 
 const ALL: BroadcastStatus[] = ["DRAFT", "QUEUED", "RUNNING", "COMPLETED", "CANCELLED", "FAILED"];
 

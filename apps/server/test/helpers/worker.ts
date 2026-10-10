@@ -1,13 +1,13 @@
 import type { INestApplicationContext } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { MockBotApi } from "@tgstack/nestjs-grammy/testing";
-import type { BroadcastWorkerModuleOptions } from "../../src/broadcasts/broadcast-worker.module.js";
+import type { BroadcastsWorkerModuleOptions } from "../../src/modules/broadcasts/broadcasts-worker.module.js";
 import { WorkerModule } from "../../src/worker.module.js";
 import { createTestEnv } from "./env.js";
 
 /** Boots the worker process (main.worker.ts equivalent) against the test database and Redis. */
 export async function createWorkerTestApp(
-  options: BroadcastWorkerModuleOptions & { api?: MockBotApi } = {},
+  options: BroadcastsWorkerModuleOptions & { api?: MockBotApi } = {},
 ): Promise<{ worker: INestApplicationContext; api: MockBotApi }> {
   const { api = new MockBotApi(), ...broadcasts } = options;
   const moduleRef = await Test.createTestingModule({

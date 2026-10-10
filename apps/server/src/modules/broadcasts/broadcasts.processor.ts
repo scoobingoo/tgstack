@@ -6,10 +6,11 @@ import {
   type OnApplicationShutdown,
 } from "@nestjs/common";
 import type { Broadcast, BroadcastStatus } from "@tgstack/db";
-import { type Job, Queue, Worker } from "bullmq";
+import { type Job, type Queue, Worker } from "bullmq";
 import { type Api, GrammyError } from "grammy";
-import { AppConfig } from "../config/app-config.js";
-import { PrismaService } from "../prisma/prisma.service.js";
+import { AppConfig } from "../../config/app-config.js";
+import { PrismaService } from "../../infra/prisma/prisma.service.js";
+import { QueueFactory } from "../../infra/queue/queue.module.js";
 import {
   BROADCAST_CONTROL_QUEUE,
   BROADCAST_MESSAGE_QUEUE,
@@ -22,9 +23,9 @@ import {
 import { sendBroadcastMessage } from "./broadcast-sender.js";
 
 export const WORKER_BOT_API = Symbol("WORKER_BOT_API");
-export const BROADCAST_WORKER_OPTIONS = Symbol("BROADCAST_WORKER_OPTIONS");
+export const BROADCASTS_PROCESSOR_OPTIONS = Symbol("BROADCASTS_PROCESSOR_OPTIONS");
 
-export interface BroadcastWorkerOptions {
+export interface BroadcastsProcessorOptions {
   /** Messages per second; defaults to `BROADCAST_RATE_PER_SECOND`. Tests raise it. */
   ratePerSecond?: number;
   /** Parallel send jobs per worker process (the limiter still paces them). */
@@ -44,8 +45,8 @@ type Counter = "sent" | "failed";
  *   count as failed; other 4xx → failed; network/5xx → retried, then failed.
  */
 @Injectable()
-export class BroadcastWorker implements OnApplicationBootstrap, OnApplicationShutdown {
-  private readonly logger = new Logger("BroadcastWorker");
+export class BroadcastsProcessor implements OnApplicationBootstrap, OnApplicationShutdown {
+  private readonly logger = new Logger("BroadcastsProcessor");
   private readonly statusCache = new Map<string, { value: Broadcast | null; at: number }>();
   private messageQueue!: Queue<SendBroadcastMessageJob>;
   private controlWorker!: Worker<StartBroadcastJob>;
@@ -54,30 +55,25 @@ export class BroadcastWorker implements OnApplicationBootstrap, OnApplicationShu
   constructor(
     private readonly config: AppConfig,
     private readonly prisma: PrismaService,
+    private readonly queues: QueueFactory,
     @Inject(WORKER_BOT_API) private readonly api: Api,
-    @Inject(BROADCAST_WORKER_OPTIONS) private readonly options: BroadcastWorkerOptions,
+    @Inject(BROADCASTS_PROCESSOR_OPTIONS) private readonly options: BroadcastsProcessorOptions,
   ) {}
 
   onApplicationBootstrap(): void {
     const rate = this.options.ratePerSecond ?? this.config.env.BROADCAST_RATE_PER_SECOND;
-    // BullMQ creates (and on close, quits) its own connections from these options.
-    const connection = { url: this.config.env.REDIS_URL };
-
-    this.messageQueue = new Queue(BROADCAST_MESSAGE_QUEUE, { connection });
-    this.controlWorker = new Worker(BROADCAST_CONTROL_QUEUE, (job) => this.snapshot(job), {
-      connection,
-      concurrency: 1,
-    });
-    this.messageWorker = new Worker(BROADCAST_MESSAGE_QUEUE, (job) => this.send(job), {
-      connection,
-      concurrency: this.options.concurrency ?? 4,
-      limiter: messageLimiter(rate),
-    });
+    this.messageQueue = this.queues.createQueue(BROADCAST_MESSAGE_QUEUE);
+    this.controlWorker = this.queues.createWorker<StartBroadcastJob>(
+      BROADCAST_CONTROL_QUEUE,
+      (job) => this.snapshot(job),
+      { concurrency: 1 },
+    );
+    this.messageWorker = this.queues.createWorker<SendBroadcastMessageJob>(
+      BROADCAST_MESSAGE_QUEUE,
+      (job) => this.send(job),
+      { concurrency: this.options.concurrency ?? 4, limiter: messageLimiter(rate) },
+    );
     this.controlWorker.on("failed", (job, error) => void this.onSnapshotFailed(job, error));
-    const logError = (error: Error) => this.logger.error(`Queue error: ${error.message}`);
-    this.controlWorker.on("error", logError);
-    this.messageWorker.on("error", logError);
-    this.messageQueue.on("error", logError);
     this.logger.log(`Broadcast worker started (${rate} msg/s)`);
   }
 

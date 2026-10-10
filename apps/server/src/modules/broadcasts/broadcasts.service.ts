@@ -16,8 +16,8 @@ import type {
 } from "@tgstack/shared";
 import type { Queue } from "bullmq";
 import { type Bot, GrammyError } from "grammy";
-import type { BotContext } from "../bot/bot.context.js";
-import { PrismaService } from "../prisma/prisma.service.js";
+import type { BotContext } from "../../bot/bot.context.js";
+import { PrismaService } from "../../infra/prisma/prisma.service.js";
 import { type StartBroadcastJob } from "./broadcast-queues.js";
 import { sendBroadcastMessage } from "./broadcast-sender.js";
 import { assertAction } from "./broadcast-state.js";

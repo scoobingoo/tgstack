@@ -59,10 +59,8 @@ function Callback() {
 
 export default function CallbackPage() {
   return (
-    <main className="flex min-h-svh items-center justify-center bg-muted/40 p-4">
-      <Suspense>
-        <Callback />
-      </Suspense>
-    </main>
+    <Suspense>
+      <Callback />
+    </Suspense>
   );
 }

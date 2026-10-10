@@ -1,7 +1,7 @@
 import { Get } from "@nestjs/common";
 import { ApiOkResponse, ApiOperation } from "@nestjs/swagger";
 import { type StatsDto, statsSchema } from "@tgstack/shared";
-import { AdminController } from "../common/admin-controller.decorator.js";
+import { AdminController } from "../../common/decorators/admin-controller.decorator.js";
 import { StatsService } from "./stats.service.js";
 
 @AdminController("stats", "admin: stats")

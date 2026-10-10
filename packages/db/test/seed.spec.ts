@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { parseTelegramIds, seed } from "../prisma/seed.js";
 import { createPrismaClient } from "../src/client.js";
-import { parseTelegramIds, seed } from "../src/seed.js";
 import { serializeBigInt } from "../src/serialization.js";
 import { getTestDatabaseUrl, resetDatabase } from "../src/testing.js";
 

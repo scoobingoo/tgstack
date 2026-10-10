@@ -8,7 +8,7 @@ import {
 } from "@tgstack/i18n";
 import type { AppMeDto } from "@tgstack/shared";
 import { createContext, type ReactNode, useContext, useMemo } from "react";
-import type { ApiClient } from "./api";
+import type { ApiClient } from "../lib/api";
 
 interface AppContextValue {
   api: ApiClient;

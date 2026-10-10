@@ -10,17 +10,17 @@ import { signInitData } from "@tgstack/shared";
 import type { Update } from "grammy/types";
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { InvoicePayloadSigner } from "../src/payments/invoice-payload.js";
+import { PrismaService } from "../src/infra/prisma/prisma.service.js";
 import {
   type CreatedInvoice,
   PAYMENT_PROVIDERS,
   type PaymentProvider,
   type PreCheckoutDecision,
   type RecordedPayment,
-} from "../src/payments/payment-provider.js";
-import { PaymentsService } from "../src/payments/payments.service.js";
-import { TelegramStarsProvider } from "../src/payments/telegram-stars.provider.js";
-import { PrismaService } from "../src/prisma/prisma.service.js";
+} from "../src/modules/payments/interfaces/payment-provider.interface.js";
+import { InvoicePayloadSigner } from "../src/modules/payments/invoice-payload.js";
+import { PaymentsService } from "../src/modules/payments/payments.service.js";
+import { TelegramStarsProvider } from "../src/modules/payments/providers/telegram-stars.provider.js";
 import { type BotTestApp, createBotTestApp, resetState, user } from "./helpers/bot-app.js";
 import { TEST_BOT_TOKEN, TEST_JWT_SECRET } from "./helpers/env.js";
 

@@ -1,9 +1,9 @@
 import { Global, Module } from "@nestjs/common";
-import { AdminGuard } from "./admin.guard.js";
+import { AdminGuard } from "../../common/guards/admin.guard.js";
+import { BotAdminGuard } from "../../common/guards/bot-admin.guard.js";
 import { AdminLinkUpdate } from "./admin-link.update.js";
 import { AuthController } from "./auth.controller.js";
 import { AuthService } from "./auth.service.js";
-import { BotAdminGuard } from "./bot-admin.guard.js";
 
 /** Admin authentication: bot magic link → session cookie (decision D4). */
 @Global()

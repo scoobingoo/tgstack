@@ -6,7 +6,7 @@ import type { BotCommand } from "grammy/types";
 import { AppConfig } from "../config/app-config.js";
 import type { BotContext } from "./bot.context.js";
 import { BotCommandsRegistry } from "./bot-commands.registry.js";
-import { BotI18n } from "./bot-i18n.service.js";
+import { BotI18n } from "./middlewares/i18n.middleware.js";
 
 /**
  * Publishes the command menu (per locale, plus an admin menu for

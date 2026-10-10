@@ -1,25 +1,25 @@
 import { type DynamicModule, Module } from "@nestjs/common";
 import { Api, type ApiClientOptions } from "grammy";
-import { AppConfig } from "../config/app-config.js";
+import { AppConfig } from "../../config/app-config.js";
 import {
-  BROADCAST_WORKER_OPTIONS,
-  BroadcastWorker,
-  type BroadcastWorkerOptions,
+  BROADCASTS_PROCESSOR_OPTIONS,
+  BroadcastsProcessor,
+  type BroadcastsProcessorOptions,
   WORKER_BOT_API,
-} from "./broadcast.worker.js";
+} from "./broadcasts.processor.js";
 
-export interface BroadcastWorkerModuleOptions extends BroadcastWorkerOptions {
+export interface BroadcastsWorkerModuleOptions extends BroadcastsProcessorOptions {
   /** Bot API client options — tests pass a mocked Bot API (`MockBotApi#clientOptions`). */
   client?: ApiClientOptions;
 }
 
 /** Worker side of broadcasts, imported by `WorkerModule` (main.worker.ts). */
 @Module({})
-export class BroadcastWorkerModule {
-  static forRoot(options: BroadcastWorkerModuleOptions = {}): DynamicModule {
+export class BroadcastsWorkerModule {
+  static forRoot(options: BroadcastsWorkerModuleOptions = {}): DynamicModule {
     const { client, ...workerOptions } = options;
     return {
-      module: BroadcastWorkerModule,
+      module: BroadcastsWorkerModule,
       providers: [
         {
           // A bare API client: no polling, no auto-retry (the worker handles 429 itself).
@@ -31,10 +31,10 @@ export class BroadcastWorkerModule {
               ...(config.env.BOT_TEST_ENVIRONMENT ? { environment: "test" as const } : {}),
             }),
         },
-        { provide: BROADCAST_WORKER_OPTIONS, useValue: workerOptions },
-        BroadcastWorker,
+        { provide: BROADCASTS_PROCESSOR_OPTIONS, useValue: workerOptions },
+        BroadcastsProcessor,
       ],
-      exports: [BroadcastWorker],
+      exports: [BroadcastsProcessor],
     };
   }
 }

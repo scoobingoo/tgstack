@@ -15,11 +15,11 @@ import {
   paginatedSchema,
   paymentSchema,
 } from "@tgstack/shared";
-import { AdminController } from "../common/admin-controller.decorator.js";
+import { AdminController } from "../../common/decorators/admin-controller.decorator.js";
 import { PaymentsService } from "./payments.service.js";
 
 @AdminController("payments", "admin: payments")
-export class PaymentsAdminController {
+export class PaymentsController {
   constructor(private readonly payments: PaymentsService) {}
 
   @Get()

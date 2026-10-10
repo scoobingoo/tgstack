@@ -10,8 +10,9 @@ import {
   productSchema,
 } from "@tgstack/shared";
 import { z } from "zod";
-import { AppUser, MiniAppController } from "../../miniapp/miniapp-auth.guard.js";
-import { TelegramStarsProvider } from "../../payments/telegram-stars.provider.js";
+import { AppUser } from "../../common/decorators/app-user.decorator.js";
+import { MiniAppController } from "../../common/decorators/mini-app-controller.decorator.js";
+import { TelegramStarsProvider } from "../../modules/payments/providers/telegram-stars.provider.js";
 import { ProductsService } from "./products.service.js";
 
 @MiniAppController("products", "mini app: shop (example)")

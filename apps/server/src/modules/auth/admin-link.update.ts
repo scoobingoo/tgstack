@@ -1,10 +1,10 @@
 import { type OnModuleInit, UseGuards } from "@nestjs/common";
 import { Command, Ctx, Update } from "@tgstack/nestjs-grammy";
 import { InlineKeyboard } from "grammy";
-import type { BotContext } from "../bot/bot.context.js";
-import { BotCommandsRegistry } from "../bot/bot-commands.registry.js";
+import type { BotContext } from "../../bot/bot.context.js";
+import { BotCommandsRegistry } from "../../bot/bot-commands.registry.js";
+import { BotAdminGuard } from "../../common/guards/bot-admin.guard.js";
 import { AuthService, MAGIC_LINK_TTL_SECONDS } from "./auth.service.js";
-import { BotAdminGuard } from "./bot-admin.guard.js";
 
 /** `/admin`: sends a one-time login link for the admin dashboard (admins only). */
 @Update()

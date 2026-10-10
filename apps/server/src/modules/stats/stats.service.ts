@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import type { StatsDto } from "@tgstack/shared";
-import { PrismaService } from "../prisma/prisma.service.js";
+import { PrismaService } from "../../infra/prisma/prisma.service.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SERIES_DAYS = 30;

@@ -22,7 +22,7 @@ admin "Refund" ───────▶ refundStarPayment ───────�
 
 - **Invoices.** The Mini App calls `POST /api/app/products/:id/invoice` and opens the link with `openInvoice()`; the bot's `/buy` (EXAMPLE) sends an invoice message with `sendInvoice`. Both use `TelegramStarsProvider.createInvoice()`: currency `XTR`, empty provider token, one price line, title ≤ 32 and description ≤ 255 characters.
 - **Payload.** At most 128 bytes, opaque and signed: `v1.<productId>.<userId>.<nonce>.<signature>` with a truncated HMAC-SHA-256 keyed by `JWT_SECRET` (`invoice-payload.ts`). It cannot be forged or replayed for another user.
-- **Pre-checkout** (`payments-bot.handlers.ts`) must be answered within 10 seconds, so it only does indexed lookups: the signature, that the payer is the user in the payload, that the product is still active and that the price did not change. Rejections show a localized reason in Telegram. Any unexpected error still answers `ok: false`.
+- **Pre-checkout** (`payments.update.ts`) must be answered within 10 seconds, so it only does indexed lookups: the signature, that the payer is the user in the payload, that the product is still active and that the price did not change. Rejections show a localized reason in Telegram. Any unexpected error still answers `ok: false`.
 - **Successful payment** is idempotent: `telegram_payment_charge_id` is unique and the insert uses `skipDuplicates`, so a re-delivered update never creates a second payment or a second thank-you message. The handlers run **before** the conversations plugin, so an open wizard cannot swallow a payment.
 - **Refunds** — dashboard → Payments → Refund (`POST /api/admin/payments/:id/refund`) calls `refundStarPayment` and marks the payment `REFUNDED`. Telegram errors are shown to the admin (`502`) and the payment stays `PAID`.
 
@@ -39,7 +39,7 @@ Check, in order: the invoice opens; the bot logs `Payment … 1 XTR from …`; t
 
 ## Adding a provider (VietQR, PayOS, …)
 
-1. Implement `PaymentProvider` (`apps/server/src/payments/payment-provider.ts`):
+1. Implement `PaymentProvider` (`apps/server/src/modules/payments/interfaces/payment-provider.interface.ts`):
 
    ```ts
    @Injectable()
@@ -53,7 +53,7 @@ Check, in order: the invoice opens; the bot logs `Payment … 1 XTR from …`; t
    }
    ```
 
-2. Register it in `PaymentsModule`: add the class to `providers` and to the `inject` list of `PAYMENT_PROVIDERS`.
+2. Put it in `modules/payments/providers/` and register it in `PaymentsModule`: add the class to `providers` and to the `inject` list of `PAYMENT_PROVIDERS`.
 3. Expose the gateway's webhook (a normal controller) that verifies the gateway's signature and calls `handleSuccess`.
 4. `PaymentsService.getProvider(name)` and the admin refund endpoint work unchanged: refunds are routed by `Payment.provider`.
 

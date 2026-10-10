@@ -2,10 +2,9 @@ import { Injectable, Logger } from "@nestjs/common";
 import type { Payment, User } from "@tgstack/db";
 import { InjectBot } from "@tgstack/nestjs-grammy";
 import type { Bot } from "grammy";
-import type { BotContext } from "../bot/bot.context.js";
-import { AppConfig } from "../config/app-config.js";
-import { PrismaService } from "../prisma/prisma.service.js";
-import { InvoicePayloadSigner } from "./invoice-payload.js";
+import type { BotContext } from "../../../bot/bot.context.js";
+import { AppConfig } from "../../../config/app-config.js";
+import { PrismaService } from "../../../infra/prisma/prisma.service.js";
 import type {
   CreatedInvoice,
   InvoiceRequest,
@@ -15,7 +14,8 @@ import type {
   PreCheckoutRequest,
   RecordedPayment,
   SuccessfulPaymentRequest,
-} from "./payment-provider.js";
+} from "../interfaces/payment-provider.interface.js";
+import { InvoicePayloadSigner } from "../invoice-payload.js";
 
 export const TELEGRAM_STARS = "telegram-stars";
 const XTR = "XTR";

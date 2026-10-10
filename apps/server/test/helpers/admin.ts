@@ -1,5 +1,6 @@
 import type { User } from "@tgstack/db";
-import { AuthService, SESSION_COOKIE } from "../../src/auth/auth.service.js";
+import { SESSION_COOKIE } from "@tgstack/shared";
+import { AuthService } from "../../src/modules/auth/auth.service.js";
 import type { BotTestApp } from "./bot-app.js";
 
 let nextTelegramId = 500_000_000n;

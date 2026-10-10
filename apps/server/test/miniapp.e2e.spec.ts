@@ -3,7 +3,7 @@ import { createCommandUpdate } from "@tgstack/nestjs-grammy/testing";
 import { signInitData, updateAppMeSchema } from "@tgstack/shared";
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { InvoicePayloadSigner } from "../src/payments/invoice-payload.js";
+import { InvoicePayloadSigner } from "../src/modules/payments/invoice-payload.js";
 import { type BotTestApp, createBotTestApp, resetState, user } from "./helpers/bot-app.js";
 import { TEST_BOT_TOKEN, TEST_JWT_SECRET } from "./helpers/env.js";
 

@@ -19,12 +19,12 @@ import {
   userDetailSchema,
   userSchema,
 } from "@tgstack/shared";
-import { CurrentAdmin } from "../auth/admin.guard.js";
-import { AdminController } from "../common/admin-controller.decorator.js";
+import { AdminController } from "../../common/decorators/admin-controller.decorator.js";
+import { CurrentAdmin } from "../../common/decorators/current-admin.decorator.js";
 import { UsersAdminService } from "./users-admin.service.js";
 
 @AdminController("users", "admin: users")
-export class UsersAdminController {
+export class UsersController {
   constructor(private readonly users: UsersAdminService) {}
 
   @Get()

@@ -8,8 +8,8 @@ import type {
   ProductDto,
   UpdateProductBody,
 } from "@tgstack/shared";
-import { toProductDto } from "../../common/dto.js";
-import { PrismaService } from "../../prisma/prisma.service.js";
+import { PrismaService } from "../../infra/prisma/prisma.service.js";
+import { toProductDto } from "./products.mapper.js";
 
 @Injectable()
 export class ProductsService {
