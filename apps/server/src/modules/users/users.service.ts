@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import type { User } from "@tgstack/db";
 import { negotiateLocale } from "@tgstack/i18n";
-import { AppConfig } from "../config/app-config.js";
-import { PrismaService } from "../prisma/prisma.service.js";
+import { AppConfig } from "../../config/app-config.js";
+import { PrismaService } from "../../infra/prisma/prisma.service.js";
 
 /** A Telegram user as reported by an update (`ctx.from`) or by Mini App `initData`. */
 export interface TelegramProfile {

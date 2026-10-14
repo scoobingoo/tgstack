@@ -1,30 +1,26 @@
 import {
-  applyDecorators,
   type CanActivate,
-  Controller,
-  createParamDecorator,
   type ExecutionContext,
   Injectable,
   UnauthorizedException,
-  UseGuards,
 } from "@nestjs/common";
-import { ApiHeader, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
 import type { User } from "@tgstack/db";
-import { errorResponseSchema, type InitData, validateInitData } from "@tgstack/shared";
+import { type InitData, MINI_APP_AUTH_SCHEME, validateInitData } from "@tgstack/shared";
 import type { Request } from "express";
-import { AppConfig } from "../config/app-config.js";
-import { UsersService } from "../users/users.service.js";
+import { AppConfig } from "../../config/app-config.js";
+import { UsersService } from "../../modules/users/users.service.js";
 
 export interface MiniAppRequest extends Request {
   miniApp?: { user: User; initData: InitData };
 }
 
-const SCHEME = /^tma\s+(.+)$/i;
+const SCHEME = new RegExp(`^${MINI_APP_AUTH_SCHEME}\\s+(.+)$`, "i");
 
 /**
  * Authenticates Mini App requests: `Authorization: tma <Telegram.WebApp.initData>`.
  * The raw initData is verified with the bot token (HMAC) and must be younger than
  * `INITDATA_MAX_AGE_SECONDS`; only then is its user trusted and upserted.
+ * Apply it with `@MiniAppController()`.
  */
 @Injectable()
 export class MiniAppAuthGuard implements CanActivate {
@@ -57,28 +53,3 @@ export class MiniAppAuthGuard implements CanActivate {
     return true;
   }
 }
-
-/** `@Controller("app/<path>")` + {@link MiniAppAuthGuard} for every Mini App endpoint. */
-export function MiniAppController(path: string, tag = "mini app"): ClassDecorator {
-  return applyDecorators(
-    Controller(path ? `app/${path}` : "app"),
-    UseGuards(MiniAppAuthGuard),
-    ApiTags(tag),
-    ApiHeader({
-      name: "Authorization",
-      description: "tma <Telegram.WebApp.initData>",
-      required: true,
-    }),
-    ApiUnauthorizedResponse({
-      description: "Missing or invalid initData",
-      standardSchema: errorResponseSchema,
-    }),
-  );
-}
-
-/** The verified Mini App user of the request. */
-export const AppUser = createParamDecorator((_data: unknown, context: ExecutionContext): User => {
-  const request = context.switchToHttp().getRequest<MiniAppRequest>();
-  if (!request.miniApp) throw new UnauthorizedException();
-  return request.miniApp.user;
-});

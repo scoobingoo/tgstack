@@ -1,6 +1,6 @@
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { StatsService } from "../src/admin/stats.service.js";
+import { StatsService } from "../src/modules/stats/stats.service.js";
 import { createAdminSession, createUser } from "./helpers/admin.js";
 import { type BotTestApp, createBotTestApp, resetState } from "./helpers/bot-app.js";
 

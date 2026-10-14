@@ -3,11 +3,10 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import type { User } from "@tgstack/db";
 import { Redis } from "ioredis";
 import { errors as joseErrors, jwtVerify, SignJWT } from "jose";
-import { AppConfig } from "../config/app-config.js";
-import { PrismaService } from "../prisma/prisma.service.js";
-import { InjectRedis } from "../redis/redis.module.js";
+import { AppConfig } from "../../config/app-config.js";
+import { PrismaService } from "../../infra/prisma/prisma.service.js";
+import { InjectRedis } from "../../infra/redis/redis.module.js";
 
-export const SESSION_COOKIE = "tgstack_session";
 export const MAGIC_LINK_TTL_SECONDS = 5 * 60;
 export const SESSION_TTL_SECONDS = 12 * 60 * 60;
 

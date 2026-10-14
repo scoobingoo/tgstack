@@ -1,6 +1,6 @@
 import type { IncomingMessage } from "node:http";
 import { LoggerModule } from "nestjs-pino";
-import { AppConfig } from "../config/app-config.js";
+import { AppConfig } from "../../config/app-config.js";
 
 /** Pino logging: pretty, single-line output in development; JSON in production. */
 export const LoggingModule = LoggerModule.forRootAsync({

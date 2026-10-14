@@ -1,8 +1,8 @@
 import { ForbiddenException, Injectable, Logger } from "@nestjs/common";
 import { negotiateLocale } from "@tgstack/i18n";
 import type { BotError } from "grammy";
-import type { BotContext } from "./bot.context.js";
-import { BotI18n } from "./bot-i18n.service.js";
+import type { BotContext } from "../bot.context.js";
+import { BotI18n } from "./i18n.middleware.js";
 
 /**
  * Last line of defence for bot updates: logs the error and tells the user that

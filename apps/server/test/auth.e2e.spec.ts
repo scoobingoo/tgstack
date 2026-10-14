@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { createCommandUpdate } from "@tgstack/nestjs-grammy/testing";
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { AuthService } from "../src/auth/auth.service.js";
+import { AuthService } from "../src/modules/auth/auth.service.js";
 import { createAdminSession, createUser } from "./helpers/admin.js";
 import { type BotTestApp, createBotTestApp, resetState, user } from "./helpers/bot-app.js";
 

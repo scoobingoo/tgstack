@@ -1,6 +1,6 @@
+import { SESSION_COOKIE } from "@tgstack/shared";
 import { type NextRequest, NextResponse } from "next/server";
 
-const SESSION_COOKIE = "tgstack_session";
 const PUBLIC_PATHS = ["/login", "/auth/callback"];
 
 /**

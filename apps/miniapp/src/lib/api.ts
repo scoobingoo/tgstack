@@ -1,6 +1,7 @@
 import {
   appMeSchema,
   invoiceLinkSchema,
+  MINI_APP_AUTH_SCHEME,
   productSchema,
   type UpdateAppMeBody,
   updateAppMeSchema,
@@ -35,7 +36,7 @@ export function createApiClient(getInitData: () => string, fetchImpl: typeof fet
       method: init.method ?? "GET",
       headers: {
         // The server verifies this signature; the user is never taken from the client.
-        Authorization: `tma ${getInitData()}`,
+        Authorization: `${MINI_APP_AUTH_SCHEME} ${getInitData()}`,
         ...(init.body === undefined ? {} : { "content-type": "application/json" }),
       },
       body: init.body === undefined ? undefined : JSON.stringify(init.body),

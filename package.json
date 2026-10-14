@@ -22,10 +22,14 @@
     "db:deploy": "pnpm --filter @tgstack/db run migrate:deploy",
     "db:seed": "pnpm --filter @tgstack/db run seed",
     "infra:up": "docker compose up -d --wait",
-    "infra:down": "docker compose down"
+    "infra:down": "docker compose down",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo run build --filter=@tgstack/nestjs-grammy && changeset publish"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.2",
+    "@changesets/cli": "3.0.3",
     "@types/node": "^24.19.2",
     "turbo": "2.11.10",
     "typescript": "6.0.3"

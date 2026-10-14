@@ -13,7 +13,7 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
-    seed: "tsx src/seed.ts",
+    seed: "tsx prisma/seed.ts",
   },
   datasource: {
     // `prisma generate` does not need a database; commands that do fail with a clear message.

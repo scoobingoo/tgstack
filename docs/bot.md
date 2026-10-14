@@ -4,9 +4,9 @@ The bot lives in `apps/server/src/bot` and is built on [`@tgstack/nestjs-grammy`
 
 ## Middleware pipeline
 
-Every update goes through these steps, in order (`bot-middlewares.service.ts`):
+Every update goes through these steps, in order (`src/bot/middlewares/`, assembled by `bot-middlewares.service.ts`):
 
-1. **Error boundary** — installed by nestjs-grammy. Unhandled errors are logged and the user gets a localized "something went wrong" reply (`bot-errors.ts`).
+1. **Error boundary** — installed by nestjs-grammy. Unhandled errors are logged and the user gets a localized "something went wrong" reply (`error-boundary.ts`).
 2. **Per-chat ordering** — `sequentialize()` from `@grammyjs/runner`. Long polling processes updates concurrently; this keeps one chat's updates in order.
 3. **Logging** — one structured log line per update: type, user, chat, outcome, latency.
 4. **User upsert** — creates/updates the `User` row and exposes it as `ctx.user`. Sets `lastSeenAt`, clears `isBlocked`, and sets `isBlocked=true` when the user blocks the bot (`my_chat_member` → `kicked`). Updates without a human sender stop here.
@@ -40,7 +40,7 @@ Messages are sent with `parse_mode: "HTML"`: wrap every user-provided value in `
 
 Translations are Fluent files in `packages/i18n/locales/<locale>/bot.ftl`, shared with the admin dashboard and the Mini App. The locale of an update is negotiated as `user.locale` → Telegram `language_code` → `en`. New users start with the locale of their Telegram app; `/language` (and the Mini App profile) changes `user.locale`, which applies to all later replies.
 
-To add a language: create `locales/<code>/*.ftl` with the same keys, add the code to `SUPPORTED_LOCALES` and `LOCALE_LABELS` in `packages/i18n/src/index.ts`.
+To add a language: create `packages/i18n/locales/<code>/*.ftl` with the same keys, add the code to `SUPPORTED_LOCALES` in `packages/shared/src/constants/index.ts` and its label to `LOCALE_LABELS` in `packages/i18n/src/index.ts`.
 
 ## Conversations
 

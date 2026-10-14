@@ -17,5 +17,19 @@ Anything that is out of scope for v1.0 (see `PLAN.md` § 1 and § 4 Phase 9) or 
 - Mini App bundle is ~200 kB gzipped (zod schemas, tma.js, translations of every namespace). Try `zod/mini` for the client, per-namespace translation chunks, and code-splitting the shop example.
 - Cancelling a large broadcast leaves its queued jobs in BullMQ; they are skipped but still pass through the rate limiter. Remove them in bulk on cancel.
 
+## Deployment
+- Slimmer server image (~800 MB today): pnpm installs the Prisma CLI as a peer of `@prisma/client`, and `@prisma/client` ships runtimes for every database. Prune them after `pnpm deploy` or generate a client that needs only the Postgres runtime.
+- Multi-arch images (`linux/arm64` for Ampere/Graviton VPSs) in `release.yml`.
+- Read the bot username at runtime in the dashboard, so the published admin image can show the "Open the bot" button.
+- Public demo (PLAN T8.3): a demo bot and dashboard with a read-only demo-admin role, reset nightly from the seed. Needs a `Role` value (schema change, needs approval) and a server to host it.
+
 ## Good first issues
-_Populated in Phase 8 (T8.3)._
+Small, self-contained tasks for a first contribution. Comment on the issue before starting.
+
+- **Add a language.** Copy `packages/i18n/locales/en/` to a new locale, translate, add the code to `SUPPORTED_LOCALES` and `LOCALE_LABELS` (docs/bot.md). The parity test tells you what is missing.
+- **`/help` lists commands dynamically.** Build the help text from `BotCommandsRegistry` instead of a fixed translation, so new commands appear automatically.
+- **Broadcast preview: broken image state.** When the image URL fails to load, the preview shows an empty box; show a small "image could not be loaded" placeholder instead (Telegram would reject the URL too).
+- **Users table: export CSV.** A button on `/users` that downloads the current filter as CSV (client-side is fine).
+- **Mini App: pull to refresh** on the shop list using TanStack Query's `refetch`.
+- **Health check for the worker.** Expose BullMQ worker liveness (e.g. a Redis heartbeat key) so Docker can restart a stuck worker.
+- **Remove queued jobs when a broadcast is cancelled** (see Performance above).

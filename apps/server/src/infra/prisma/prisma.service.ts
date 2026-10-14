@@ -1,6 +1,6 @@
 import { Injectable, type OnModuleDestroy, type OnModuleInit } from "@nestjs/common";
 import { createPrismaAdapter, PrismaClient } from "@tgstack/db";
-import { AppConfig } from "../config/app-config.js";
+import { AppConfig } from "../../config/app-config.js";
 
 /** Prisma Client as a Nest provider; connects on init and disconnects on shutdown. */
 @Injectable()

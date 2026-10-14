@@ -2,10 +2,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createTranslator, negotiateLocale } from "@tgstack/i18n";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { App } from "./App";
-import { ApiError, createApiClient } from "./api";
-import { AppProvider } from "./app-context";
-import { getRawInitData, initTelegram } from "./telegram";
+import { App } from "./app/App";
+import { AppProvider } from "./app/app-context";
+import { getRawInitData, initTelegram } from "./app/telegram";
+import { ApiError, createApiClient } from "./lib/api";
 import "./index.css";
 
 const root = createRoot(document.getElementById("root") as HTMLElement);

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SUPPORTED_LOCALES } from "../constants/index.js";
 import { telegramIdSchema } from "./common.js";
 
 /** The signed-in Mini App user (`GET /api/app/me`). */
@@ -16,8 +17,7 @@ export const appMeSchema = z.object({
 export type AppMeDto = z.infer<typeof appMeSchema>;
 
 export const updateAppMeSchema = z.object({
-  /** Keep in sync with SUPPORTED_LOCALES in @tgstack/i18n (a server test checks it). */
-  locale: z.enum(["en", "vi"]),
+  locale: z.enum(SUPPORTED_LOCALES),
 });
 export type UpdateAppMeBody = z.infer<typeof updateAppMeSchema>;
 

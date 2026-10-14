@@ -1,8 +1,8 @@
 import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import type { Filter } from "grammy";
-import type { BotContext } from "../bot/bot.context.js";
-import { BotMiddlewares } from "../bot/bot-middlewares.service.js";
-import { PrismaService } from "../prisma/prisma.service.js";
+import type { BotContext } from "../../bot/bot.context.js";
+import { BotMiddlewares } from "../../bot/middlewares/bot-middlewares.service.js";
+import { PrismaService } from "../../infra/prisma/prisma.service.js";
 import { PaymentsService } from "./payments.service.js";
 
 /**
@@ -13,7 +13,7 @@ import { PaymentsService } from "./payments.service.js";
  * onboarding wizard) would otherwise swallow the `successful_payment` message.
  */
 @Injectable()
-export class PaymentsBotHandlers implements OnModuleInit {
+export class PaymentsUpdate implements OnModuleInit {
   private readonly logger = new Logger("Payments");
 
   constructor(

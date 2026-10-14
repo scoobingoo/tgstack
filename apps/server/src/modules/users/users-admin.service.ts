@@ -7,8 +7,9 @@ import type {
   UserDetailDto,
   UserDto,
 } from "@tgstack/shared";
-import { paymentInclude, toPaymentDto, toUserDto } from "../common/dto.js";
-import { PrismaService } from "../prisma/prisma.service.js";
+import { PrismaService } from "../../infra/prisma/prisma.service.js";
+import { paymentInclude, toPaymentDto } from "../payments/payments.mapper.js";
+import { toUserDto } from "./users.mapper.js";
 
 const RECENT_PAYMENTS = 20;
 

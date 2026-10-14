@@ -7,8 +7,9 @@ import {
   type UpdateAppMeBody,
   updateAppMeSchema,
 } from "@tgstack/shared";
-import { PrismaService } from "../prisma/prisma.service.js";
-import { AppUser, MiniAppController } from "./miniapp-auth.guard.js";
+import { AppUser } from "../../common/decorators/app-user.decorator.js";
+import { MiniAppController } from "../../common/decorators/mini-app-controller.decorator.js";
+import { PrismaService } from "../../infra/prisma/prisma.service.js";
 
 function toAppMe(user: User): AppMeDto {
   return {
@@ -23,7 +24,7 @@ function toAppMe(user: User): AppMeDto {
 }
 
 @MiniAppController("")
-export class MiniAppMeController {
+export class AppMeController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get("me")

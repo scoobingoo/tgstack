@@ -73,7 +73,7 @@ Every non-obvious choice made while building tgstack. Format: **date — decisio
 - **Alternatives:** document "install `bot.errorBoundary()` yourself" (easy to miss).
 
 ## D15 — `PrismaService` lives in `apps/server`; `packages/db` stays framework-agnostic (2026-10-22)
-- **Decision:** `packages/db` exports the generated client, `createPrismaClient`/`createPrismaAdapter`, BigInt JSON helpers, the seed and test helpers. The Nest `PrismaService` (lifecycle hooks) is in `apps/server/src/prisma`.
+- **Decision:** `packages/db` exports the generated client, `createPrismaClient`/`createPrismaAdapter`, BigInt JSON helpers, and test helpers; the seed is `prisma/seed.ts`. The Nest `PrismaService` (lifecycle hooks) is in `apps/server/src/infra/prisma`.
 - **Reason:** keeps `@nestjs/*` out of the database package so scripts and future apps can use it.
 - **Alternatives:** Nest peer dependency in `packages/db`.
 
@@ -176,3 +176,35 @@ Every non-obvious choice made while building tgstack. Format: **date — decisio
 - **Decision:** a boolean env var switches grammY's client to Telegram's test environment for the bot and the worker.
 - **Reason:** PLAN T7.2 asks for a documented manual payment test in Telegram's test environment; without it the documented steps could not be followed.
 - **Alternatives:** documenting only small real-Star payments.
+
+## D36 — Feature-oriented server layout: `common/`, `infra/`, `bot/`, `modules/`, `examples/` (2026-10-22)
+- **Decision:** `apps/server/src` follows `docs/architecture.md`: cross-cutting guards, decorators, filters, pipes and interceptors in `common/`; stateful connections (Prisma, Redis, BullMQ, logging, health) in `infra/`; the grammY pipeline and core commands in `bot/`; one folder per domain in `modules/` (auth, users, stats, broadcasts, payments); deletable showcases in `examples/`. Endpoints of one domain live together whatever their audience: `modules/users` owns `/api/admin/users/*` and `/api/app/me`. The former `admin/` and `miniapp/` modules are gone.
+- **Reason:** a reader finds everything about a feature in one folder, and dependencies point one way: `examples` → `modules` → `bot`/`common` → `infra` → `config`. The only upward edges are the identity services every request needs (`UsersService`, `AuthService`). `apps/server/test/architecture.spec.ts` enforces it.
+- **Alternatives:** the previous layout by audience (`admin/`, `miniapp/`), which split users and products across folders.
+
+## D37 — Where the implementation departs from the architecture guide (2026-10-22)
+- **Decision:** six deliberate differences from the restructuring guide, each kept because the guide's version would break something or add coupling:
+  1. `/admin` (magic link) stays in `modules/auth/admin-link.update.ts` and payment handlers in `modules/payments/payments.update.ts`: features own their bot entry points, so `bot/` depends on no domain module except `modules/users` (the identity every update needs).
+  2. The pipeline has two steps the guide does not list: `sequentialize` (required by the concurrent runner) and `beforeConversations` (D34); `/cancel` is middleware, not an `@Update` handler, so a wizard cannot swallow it.
+  3. Sessions use our own `RedisStorage` instead of `@grammyjs/storage-redis` (D20).
+  4. Queue names stay in the server (`modules/broadcasts/broadcast-queues.ts`); `@tgstack/shared` only holds values the browser apps also need (locales, cookie name, auth scheme, route prefixes).
+  5. Translations stay split per app (`locales/<locale>/{bot,admin,miniapp}.ftl`), so the Mini App bundle only carries its own strings.
+  6. Next.js 16 renamed `middleware.ts` to `proxy.ts`; `packages/nestjs-grammy` keeps `services/` for the explorer and lifecycle (its public API is unchanged).
+- **Reason:** see each item.
+- **Alternatives:** following the guide to the letter.
+
+## D38 — `@tgstack/shared/constants` is the single source of cross-app values (2026-10-22)
+- **Decision:** `SUPPORTED_LOCALES`, `DEFAULT_LOCALE`, `SESSION_COOKIE`, `MINI_APP_AUTH_SCHEME`, `TELEGRAM_SECRET_TOKEN_HEADER` and `API_ROUTES` live in `packages/shared/src/constants`. `@tgstack/i18n` re-exports the locale list (it now depends on `@tgstack/shared`).
+- **Reason:** the locale list was duplicated in a zod enum and the cookie name in the admin proxy; a test had to keep them in sync.
+- **Alternatives:** keeping the duplicates with sync tests.
+
+## D39 — BigInt safety net as a global interceptor (2026-10-22)
+- **Decision:** `BigIntSerializerInterceptor` (`APP_INTERCEPTOR`) converts any `bigint` left in a response or SSE event to a string; it replaces the Express `json replacer`. Explicit DTO mappers remain the primary mechanism (D6).
+- **Reason:** the replacer did not cover Server-Sent Events, which Nest serializes itself.
+- **Alternatives:** patching `BigInt.prototype.toJSON` (global side effect in every process that imports `@tgstack/db`).
+
+## D40 — Docker: one server image, a separate migrate image, Caddy in front (2026-10-22)
+- **Decision:** `docker/server.Dockerfile` builds the API image (also run as the worker with `node dist/main.worker.js`) and a `migrate` target holding only `@tgstack/db` and the Prisma CLI. Admin uses Next's standalone output; the Mini App is static files served by Caddy. `docker-compose.prod.yml` puts Caddy (automatic HTTPS) in front: `/api`, `/telegram`, `/health` → server, `/app/` → Mini App, the rest → admin. Images install with `--trust-lockfile`.
+- **Reason:** one origin means no CORS and first-party cookies; migrations run once before the server and worker start. The supply-chain check of the lockfile already ran on the developer's machine; repeating it in every image build took over six minutes.
+- **Alternatives:** running migrations on server start (races between replicas), a Mini App subdomain.
+

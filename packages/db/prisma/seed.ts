@@ -1,6 +1,6 @@
 import { pathToFileURL } from "node:url";
-import { createPrismaClient } from "./client.js";
-import type { PrismaClient } from "./generated/prisma/client.js";
+import { createPrismaClient } from "../src/client.js";
+import type { PrismaClient } from "../src/generated/prisma/client.js";
 
 export interface SeedOptions {
   /** Telegram user IDs promoted to ADMIN (from `ADMIN_TELEGRAM_IDS`). */

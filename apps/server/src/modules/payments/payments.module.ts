@@ -1,9 +1,12 @@
 import { Global, Module } from "@nestjs/common";
-import { PAYMENT_PROVIDERS, type PaymentProvider } from "./payment-provider.js";
+import {
+  PAYMENT_PROVIDERS,
+  type PaymentProvider,
+} from "./interfaces/payment-provider.interface.js";
+import { PaymentsController } from "./payments.controller.js";
 import { PaymentsService } from "./payments.service.js";
-import { PaymentsAdminController } from "./payments-admin.controller.js";
-import { PaymentsBotHandlers } from "./payments-bot.handlers.js";
-import { TelegramStarsProvider } from "./telegram-stars.provider.js";
+import { PaymentsUpdate } from "./payments.update.js";
+import { TelegramStarsProvider } from "./providers/telegram-stars.provider.js";
 
 /**
  * Payments core. Providers are listed in `PAYMENT_PROVIDERS`; add a gateway by
@@ -11,7 +14,7 @@ import { TelegramStarsProvider } from "./telegram-stars.provider.js";
  */
 @Global()
 @Module({
-  controllers: [PaymentsAdminController],
+  controllers: [PaymentsController],
   providers: [
     TelegramStarsProvider,
     {
@@ -20,7 +23,7 @@ import { TelegramStarsProvider } from "./telegram-stars.provider.js";
       useFactory: (...providers: PaymentProvider[]) => providers,
     },
     PaymentsService,
-    PaymentsBotHandlers,
+    PaymentsUpdate,
   ],
   exports: [PaymentsService, TelegramStarsProvider],
 })

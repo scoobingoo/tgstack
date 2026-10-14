@@ -1,0 +1,49 @@
+name: Bug report
+description: Something does not work as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for reporting! Please never paste bot tokens, secrets or real user data.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. `pnpm dev`
+        2. Send /start to the bot
+        3. …
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Bot (apps/server/src/bot)
+        - API / worker (apps/server)
+        - Admin dashboard (apps/admin)
+        - Mini App (apps/miniapp)
+        - "@tgstack/nestjs-grammy"
+        - Docker / deployment
+        - Docs
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant log lines (remove secrets).
+      render: text
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      placeholder: tgstack commit or tag, Node.js, OS, browser / Telegram client

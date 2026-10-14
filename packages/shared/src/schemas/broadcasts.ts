@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { htmlTextLength } from "../html.js";
+import { htmlTextLength } from "../utils/html.js";
 import { isoDateSchema, paginationQuerySchema } from "./common.js";
 
 export const broadcastStatusSchema = z.enum([

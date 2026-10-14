@@ -21,14 +21,15 @@ import {
   type ExchangeTokenBody,
   errorResponseSchema,
   exchangeTokenSchema,
+  SESSION_COOKIE,
   type SessionDto,
   sessionSchema,
 } from "@tgstack/shared";
 import type { CookieOptions, Response } from "express";
-import { toUserDto } from "../common/dto.js";
-import { AppConfig } from "../config/app-config.js";
-import { AdminGuard, type AuthenticatedRequest } from "./admin.guard.js";
-import { AuthService, SESSION_COOKIE, SESSION_TTL_SECONDS } from "./auth.service.js";
+import { AdminGuard, type AuthenticatedRequest } from "../../common/guards/admin.guard.js";
+import { AppConfig } from "../../config/app-config.js";
+import { toUserDto } from "../users/users.mapper.js";
+import { AuthService, SESSION_TTL_SECONDS } from "./auth.service.js";
 
 @ApiTags("auth")
 @Controller("auth")

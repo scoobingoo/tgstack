@@ -9,9 +9,12 @@ import {
 import type { Prisma } from "@tgstack/db";
 import type { ListPaymentsQuery, Paginated, PaymentDto } from "@tgstack/shared";
 import { GrammyError } from "grammy";
-import { paymentInclude, toPaymentDto } from "../common/dto.js";
-import { PrismaService } from "../prisma/prisma.service.js";
-import { PAYMENT_PROVIDERS, type PaymentProvider } from "./payment-provider.js";
+import { PrismaService } from "../../infra/prisma/prisma.service.js";
+import {
+  PAYMENT_PROVIDERS,
+  type PaymentProvider,
+} from "./interfaces/payment-provider.interface.js";
+import { paymentInclude, toPaymentDto } from "./payments.mapper.js";
 
 /** Resolves providers by name and implements provider-independent operations. */
 @Injectable()

@@ -40,7 +40,7 @@ pnpm --filter @tgstack/server dev        # or dev:mock without a bot token
 pnpm --filter @tgstack/miniapp dev       # http://localhost:5173
 ```
 
-Outside Telegram, `vite dev` mocks the Telegram environment (`src/dev-mock.ts`):
+Outside Telegram, `vite dev` mocks the Telegram environment (`src/mocks/dev-mock.ts`):
 
 - the dev server serves `GET /__dev/init-data`: a **real, signed** initData for a fake user, signed with `BOT_TOKEN` *inside the dev server* — the token never reaches the browser;
 - Telegram's Main and Back buttons are drawn as plain buttons;

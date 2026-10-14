@@ -1,14 +1,14 @@
 import {
   type CanActivate,
-  createParamDecorator,
   type ExecutionContext,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
 import type { User } from "@tgstack/db";
+import { SESSION_COOKIE } from "@tgstack/shared";
 import type { Request } from "express";
-import { AuthService, SESSION_COOKIE } from "./auth.service.js";
+import { AuthService } from "../../modules/auth/auth.service.js";
 
 export interface AuthenticatedRequest extends Request {
   admin?: { user: User; sessionId: string; expiresAt: Date };
@@ -17,6 +17,7 @@ export interface AuthenticatedRequest extends Request {
 /**
  * Protects every `/api/admin/*` route: requires a valid session cookie of a user
  * who is still an ADMIN. `401` without a usable session, `403` for non-admins.
+ * Apply it with `@AdminController()`.
  */
 @Injectable()
 export class AdminGuard implements CanActivate {
@@ -33,10 +34,3 @@ export class AdminGuard implements CanActivate {
     return true;
   }
 }
-
-/** The signed-in admin of the current request (routes protected by {@link AdminGuard}). */
-export const CurrentAdmin = createParamDecorator((_data: unknown, context: ExecutionContext) => {
-  const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-  if (!request.admin) throw new UnauthorizedException();
-  return request.admin.user;
-});

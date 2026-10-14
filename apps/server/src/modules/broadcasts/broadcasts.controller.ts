@@ -42,8 +42,8 @@ import {
   switchMap,
   takeWhile,
 } from "rxjs";
-import { CurrentAdmin } from "../auth/admin.guard.js";
-import { AdminController } from "../common/admin-controller.decorator.js";
+import { AdminController } from "../../common/decorators/admin-controller.decorator.js";
+import { CurrentAdmin } from "../../common/decorators/current-admin.decorator.js";
 import { isTerminal } from "./broadcast-state.js";
 import { BroadcastsService } from "./broadcasts.service.js";
 
@@ -51,7 +51,7 @@ import { BroadcastsService } from "./broadcasts.service.js";
 export const PROGRESS_INTERVAL_MS = 1_000;
 
 @AdminController("broadcasts", "admin: broadcasts")
-export class BroadcastsAdminController {
+export class BroadcastsController {
   constructor(private readonly broadcasts: BroadcastsService) {}
 
   @Get()

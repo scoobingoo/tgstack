@@ -1,11 +1,10 @@
 import { FluentBundle, FluentResource, type FluentVariable } from "@fluent/bundle";
+import { DEFAULT_LOCALE, type Locale, SUPPORTED_LOCALES } from "@tgstack/shared";
 import { resources } from "./generated/resources.js";
 
+// The locale list lives in @tgstack/shared so zod schemas can use it too.
+export { DEFAULT_LOCALE, type Locale, SUPPORTED_LOCALES } from "@tgstack/shared";
 export { resources };
-
-export const SUPPORTED_LOCALES = ["en", "vi"] as const;
-export type Locale = (typeof SUPPORTED_LOCALES)[number];
-export const DEFAULT_LOCALE: Locale = "en";
 
 export type Namespace = keyof (typeof resources)[Locale];
 

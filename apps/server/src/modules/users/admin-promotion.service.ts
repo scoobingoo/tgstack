@@ -1,6 +1,6 @@
 import { Injectable, Logger, type OnApplicationBootstrap } from "@nestjs/common";
-import { AppConfig } from "../config/app-config.js";
-import { PrismaService } from "../prisma/prisma.service.js";
+import { AppConfig } from "../../config/app-config.js";
+import { PrismaService } from "../../infra/prisma/prisma.service.js";
 
 /**
  * Promotes `ADMIN_TELEGRAM_IDS` to ADMIN on boot. Users who have never talked to

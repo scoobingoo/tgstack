@@ -58,3 +58,15 @@ Set `TEST_LOG_LEVEL=info` to see the server logs while a test runs.
 ## Code style
 
 `pnpm lint` runs Biome (`pnpm lint:fix` to fix). Every commit should pass `pnpm lint && pnpm typecheck && pnpm test` and use [Conventional Commits](https://www.conventionalcommits.org).
+
+## Where code goes
+
+[architecture.md](architecture.md) describes the layout: a new server feature goes in `apps/server/src/modules/<feature>/` (module, controllers, service, `*.update.ts` bot handlers, mappers), infrastructure in `infra/`, cross-cutting guards and decorators in `common/`. `apps/server/test/architecture.spec.ts` fails when an import crosses a boundary.
+
+## Everything in containers
+
+`docker compose --profile full up -d --build` builds the production images and serves the whole stack on http://localhost:8080 (needs a real `BOT_TOKEN`). Production deployment: [deployment.md](deployment.md).
+
+## Releasing `@tgstack/nestjs-grammy`
+
+Add a changeset when you change the package (`pnpm changeset`). The publish workflow turns pending changesets into a "Version packages" pull request; merging it publishes to npm with provenance.

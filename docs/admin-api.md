@@ -54,4 +54,4 @@ export class ReportsController {
 }
 ```
 
-Define the schemas in `packages/shared/src/schemas`, validate input with `@Body({ schema })` / `@Query({ schema })` (a global `StandardSchemaValidationPipe` runs them) and map Prisma rows to DTOs explicitly (see `apps/server/src/common/dto.ts`).
+Define the schemas in `packages/shared/src/schemas`, validate input with `@Body({ schema })` / `@Query({ schema })` (a global `StandardSchemaValidationPipe` runs them) and map Prisma rows to DTOs explicitly with a mapper next to the module (for example `apps/server/src/modules/users/users.mapper.ts`). A global `BigIntSerializerInterceptor` is the safety net for any `bigint` that slips through.

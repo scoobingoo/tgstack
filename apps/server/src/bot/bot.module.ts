@@ -6,10 +6,10 @@ import type { UserFromGetMe } from "grammy/types";
 import { AppConfig } from "../config/app-config.js";
 import type { BotContext } from "./bot.context.js";
 import { BotCommandsRegistry } from "./bot-commands.registry.js";
-import { BotErrorHandler } from "./bot-errors.js";
-import { BotI18n } from "./bot-i18n.service.js";
-import { BotMiddlewares } from "./bot-middlewares.service.js";
 import { BotSetupService } from "./bot-setup.service.js";
+import { BotMiddlewares } from "./middlewares/bot-middlewares.service.js";
+import { BotErrorHandler } from "./middlewares/error-boundary.js";
+import { BotI18n } from "./middlewares/i18n.middleware.js";
 import { LanguageUpdate } from "./updates/language.update.js";
 import { StartUpdate } from "./updates/start.update.js";
 

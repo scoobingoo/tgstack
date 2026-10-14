@@ -1,6 +1,5 @@
 import type { INestApplication } from "@nestjs/common";
 import type { NestExpressApplication } from "@nestjs/platform-express";
-import { bigIntReplacer } from "@tgstack/db";
 import cookieParser from "cookie-parser";
 import { Logger } from "nestjs-pino";
 import { setupSwagger } from "./common/swagger.js";
@@ -14,8 +13,6 @@ import { EnvValidationError } from "./config/env.js";
 export function configureApp(app: NestExpressApplication): INestApplication {
   const config = app.get(AppConfig);
   app.useLogger(app.get(Logger));
-  // Decision D6: Telegram IDs are BigInt in the DB and strings in JSON.
-  app.set("json replacer", bigIntReplacer);
   app.set("trust proxy", 1);
   app.disable("x-powered-by");
   app.use(cookieParser());

@@ -5,9 +5,8 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { errorResponseSchema } from "@tgstack/shared";
-import { AdminGuard } from "../auth/admin.guard.js";
-import { SESSION_COOKIE } from "../auth/auth.service.js";
+import { errorResponseSchema, SESSION_COOKIE } from "@tgstack/shared";
+import { AdminGuard } from "../guards/admin.guard.js";
 
 /**
  * `@Controller("admin/<path>")` + {@link AdminGuard}. Use it for every admin

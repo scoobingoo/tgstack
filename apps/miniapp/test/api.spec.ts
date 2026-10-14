@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ApiError, createApiClient } from "../src/api";
+import { ApiError, createApiClient } from "../src/lib/api";
 
 const me = {
   id: "u1",
