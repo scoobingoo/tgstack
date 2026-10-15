@@ -18,7 +18,7 @@ import type { Queue } from "bullmq";
 import { type Bot, GrammyError } from "grammy";
 import type { BotContext } from "../../bot/bot.context.js";
 import { PrismaService } from "../../infra/prisma/prisma.service.js";
-import { type StartBroadcastJob } from "./broadcast-queues.js";
+import { CONTROL_JOB, type StartBroadcastJob } from "./broadcast-queues.js";
 import { sendBroadcastMessage } from "./broadcast-sender.js";
 import { assertAction } from "./broadcast-state.js";
 
@@ -144,7 +144,7 @@ export class BroadcastsService implements OnApplicationShutdown {
     });
     if (count === 0) assertAction((await this.find(id)).status, "start");
     await this.controlQueue.add(
-      "start",
+      CONTROL_JOB.start,
       { broadcastId: id },
       {
         jobId: `start-${id}`,
@@ -157,7 +157,11 @@ export class BroadcastsService implements OnApplicationShutdown {
     return this.progress(id);
   }
 
-  /** Stops a broadcast. Queued messages are skipped by the worker. */
+  /**
+   * Stops a broadcast. Messages already handed to a worker are skipped; the
+   * waiting ones are removed by a `purge` job so they do not hold up the
+   * rate-limited queue for the next broadcast.
+   */
   async cancel(id: string): Promise<BroadcastProgressDto> {
     const broadcast = await this.find(id);
     assertAction(broadcast.status, "cancel");
@@ -166,6 +170,13 @@ export class BroadcastsService implements OnApplicationShutdown {
       data: { status: "CANCELLED", finishedAt: new Date() },
     });
     if (count === 0) assertAction((await this.find(id)).status, "cancel");
+    if (broadcast.status !== "DRAFT") {
+      await this.controlQueue.add(
+        CONTROL_JOB.purge,
+        { broadcastId: id },
+        { jobId: `purge-${id}`, attempts: 3, removeOnComplete: true, removeOnFail: 100 },
+      );
+    }
     return this.progress(id);
   }
 

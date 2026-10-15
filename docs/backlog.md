@@ -14,13 +14,9 @@ Anything that is out of scope for v1.0 (see `PLAN.md` § 1 and § 4 Phase 9) or 
 - Move to TypeScript 7 once NestJS tooling (`@nestjs/swagger`, `@nestjs/cli`) declares support (see D7).
 
 ## Performance
-- Mini App bundle is ~200 kB gzipped (zod schemas, tma.js, translations of every namespace). Try `zod/mini` for the client, per-namespace translation chunks, and code-splitting the shop example.
-- Cancelling a large broadcast leaves its queued jobs in BullMQ; they are skipped but still pass through the rate limiter. Remove them in bulk on cancel.
+- Mini App bundle is ~136 kB gzipped; react-dom is half of it and zod (~83 kB minified) the next biggest. `zod/mini` schemas for the client would save ~20 kB gzipped but means maintaining a second set of schemas.
 
 ## Deployment
-- Slimmer server image (~800 MB today): pnpm installs the Prisma CLI as a peer of `@prisma/client`, and `@prisma/client` ships runtimes for every database. Prune them after `pnpm deploy` or generate a client that needs only the Postgres runtime.
-- Multi-arch images (`linux/arm64` for Ampere/Graviton VPSs) in `release.yml`.
-- Read the bot username at runtime in the dashboard, so the published admin image can show the "Open the bot" button.
 - Public demo (PLAN T8.3): a demo bot and dashboard with a read-only demo-admin role, reset nightly from the seed. Needs a `Role` value (schema change, needs approval) and a server to host it.
 
 ## Good first issues
@@ -31,5 +27,4 @@ Small, self-contained tasks for a first contribution. Comment on the issue befor
 - **Broadcast preview: broken image state.** When the image URL fails to load, the preview shows an empty box; show a small "image could not be loaded" placeholder instead (Telegram would reject the URL too).
 - **Users table: export CSV.** A button on `/users` that downloads the current filter as CSV (client-side is fine).
 - **Mini App: pull to refresh** on the shop list using TanStack Query's `refetch`.
-- **Health check for the worker.** Expose BullMQ worker liveness (e.g. a Redis heartbeat key) so Docker can restart a stuck worker.
-- **Remove queued jobs when a broadcast is cancelled** (see Performance above).
+- **Worker metrics.** Log queue depth (`waiting`, `delayed`) with each heartbeat so a stuck broadcast is visible in the logs.

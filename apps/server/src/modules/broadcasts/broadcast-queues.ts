@@ -1,8 +1,13 @@
-/** Control queue: one `start` job per broadcast, which snapshots the recipients. */
+/**
+ * Control queue: a `start` job per broadcast snapshots the recipients; a `purge`
+ * job after a cancel removes its messages that are still waiting.
+ */
 export const BROADCAST_CONTROL_QUEUE = "broadcast-control";
+export const CONTROL_JOB = { start: "start", purge: "purge" } as const;
 /** Message queue: one `send` job per recipient, rate-limited globally. */
 export const BROADCAST_MESSAGE_QUEUE = "broadcast-messages";
 
+/** Data of both control jobs (`purge` only uses `broadcastId`). */
 export interface StartBroadcastJob {
   broadcastId: string;
   /** Snapshot progress, persisted so a retried job resumes instead of re-enqueuing. */
@@ -29,4 +34,9 @@ export const MESSAGE_ATTEMPTS = 3;
  */
 export function messageLimiter(ratePerSecond: number): { max: number; duration: number } {
   return { max: 1, duration: Math.ceil(1000 / ratePerSecond) };
+}
+
+/** One message job per broadcast and user: a retried snapshot never duplicates a message. */
+export function messageJobId(broadcastId: string, userId: string): string {
+  return `${broadcastId}-${userId}`;
 }

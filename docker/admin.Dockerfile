@@ -15,8 +15,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 # Inlined at build time. NEXT_PUBLIC_API_URL is where /api/* is proxied when the
 # reverse proxy does not route it first (it does in docker-compose.prod.yml).
 ARG NEXT_PUBLIC_API_URL=http://server:3000
-ARG NEXT_PUBLIC_BOT_USERNAME=
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} NEXT_PUBLIC_BOT_USERNAME=${NEXT_PUBLIC_BOT_USERNAME}
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 RUN pnpm exec turbo run build --filter=@tgstack/admin...
 
 FROM node:${NODE_VERSION}-alpine AS runtime

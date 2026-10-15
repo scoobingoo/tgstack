@@ -9,6 +9,7 @@ import {
   BroadcastsWorkerModule,
   type BroadcastsWorkerModuleOptions,
 } from "./modules/broadcasts/broadcasts-worker.module.js";
+import { DEFAULT_HEARTBEAT_FILE, HEARTBEAT_FILE, WorkerHeartbeat } from "./worker-heartbeat.js";
 
 /**
  * Root module of the worker process (`main.worker.ts`): BullMQ processors and a
@@ -17,7 +18,12 @@ import {
 @Module({})
 export class WorkerModule {
   static forRoot(
-    options: { env?: Env; broadcasts?: BroadcastsWorkerModuleOptions } = {},
+    options: {
+      env?: Env;
+      broadcasts?: BroadcastsWorkerModuleOptions;
+      /** Where the liveness heartbeat is written (tests use a unique path). */
+      heartbeatFile?: string;
+    } = {},
   ): DynamicModule {
     return {
       module: WorkerModule,
@@ -28,6 +34,10 @@ export class WorkerModule {
         RedisModule,
         QueueModule,
         BroadcastsWorkerModule.forRoot(options.broadcasts),
+      ],
+      providers: [
+        { provide: HEARTBEAT_FILE, useValue: options.heartbeatFile ?? DEFAULT_HEARTBEAT_FILE },
+        WorkerHeartbeat,
       ],
     };
   }

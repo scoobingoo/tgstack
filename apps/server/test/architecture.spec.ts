@@ -123,10 +123,14 @@ describe("server layers", () => {
         /broadcasts-worker\.module\.js$|\.processor\.js$/.test(target),
       ),
     );
+    // Only files that belong to the worker process (main.worker.ts) may load processors.
     expect(importers.map(rel).sort()).toEqual([
       "modules/broadcasts/broadcasts-worker.module.ts",
+      "worker-heartbeat.ts",
       "worker.module.ts",
     ]);
+    const appModuleImports = serverImports(path.join(serverSrc, "app.module.ts"));
+    expect(appModuleImports.filter((target) => /^worker/.test(target))).toEqual([]);
   });
 });
 

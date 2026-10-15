@@ -47,7 +47,9 @@ Per message:
 
 Counters are incremented in a single SQL statement that also flips the broadcast to `COMPLETED` (with `finishedAt`) when `sent + failed = total`.
 
-**Cancelling** sets the status; workers re-read it at least once per second and skip the remaining jobs (they still pass through the limiter, so draining a large cancelled broadcast takes a while — see the backlog).
+**Cancelling** sets the status and adds a `purge` job to the control queue: the worker removes the broadcast's waiting, delayed and retrying messages (job IDs are `<broadcast>-<user>`, so it walks the users instead of scanning the queue), and the next broadcast does not wait behind them. Messages a worker already holds are skipped, because workers re-read the status at least once per second. A snapshot that is still running stops at its next batch.
+
+**Worker liveness.** The worker has no HTTP port; every 10 seconds it checks that its queue workers run and Redis answers, then touches a heartbeat file (`$TMPDIR/tgstack-worker.heartbeat`). The Docker healthcheck fails when the file is older than a minute, and after a minute of failed checks the worker exits so the restart policy brings it back.
 
 ## Tuning
 

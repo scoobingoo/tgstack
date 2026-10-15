@@ -1,7 +1,11 @@
+import { statSync } from "node:fs";
 import type { INestApplicationContext } from "@nestjs/common";
 import { ApiError, MockBotApi } from "@tgstack/nestjs-grammy/testing";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { QueueFactory } from "../src/infra/queue/queue.module.js";
+import { BROADCAST_MESSAGE_QUEUE } from "../src/modules/broadcasts/broadcast-queues.js";
+import { WorkerHeartbeat } from "../src/worker-heartbeat.js";
 import { createAdminSession } from "./helpers/admin.js";
 import { type BotTestApp, createBotTestApp, resetState } from "./helpers/bot-app.js";
 import { createWorkerTestApp } from "./helpers/worker.js";
@@ -12,12 +16,13 @@ const FIRST_TELEGRAM_ID = 800_000_000n;
 
 let t: BotTestApp;
 let worker: INestApplicationContext;
+let heartbeatFile: string;
 const workerApi = new MockBotApi();
 
 beforeAll(async () => {
   t = await createBotTestApp();
   await resetState(t);
-  ({ worker } = await createWorkerTestApp({
+  ({ worker, heartbeatFile } = await createWorkerTestApp({
     api: workerApi,
     ratePerSecond: RATE_PER_SECOND,
     concurrency: 8,
@@ -61,6 +66,11 @@ function maxInWindow(timestamps: number[], windowMs: number): number {
 }
 
 describe("broadcast worker", () => {
+  it("writes a liveness heartbeat for the container healthcheck", async () => {
+    expect(Date.now() - statSync(heartbeatFile).mtimeMs).toBeLessThan(15_000);
+    expect(await worker.get(WorkerHeartbeat).beat()).toBe(true);
+  });
+
   it("delivers to 1,000 users within the rate limit, honouring 429 and 403", async () => {
     const { admin, cookie } = await createAdminSession(t);
     await t.prisma.user.update({ where: { id: admin.id }, data: { isBlocked: true } }); // keep the admin out
@@ -158,6 +168,19 @@ describe("broadcast worker", () => {
       .post(`/api/admin/broadcasts/${draft.id}/cancel`)
       .set("Cookie", cookie)
       .expect(200);
+
+    // The waiting messages are removed at once, not left to trickle through the
+    // rate limiter (draining ~370 of them at 100/s would take several seconds).
+    const queue = worker.get(QueueFactory).createQueue(BROADCAST_MESSAGE_QUEUE);
+    try {
+      await vi.waitFor(
+        async () =>
+          expect(await queue.getJobCountByTypes("waiting", "delayed", "prioritized")).toBe(0),
+        { timeout: 1_000, interval: 50 },
+      );
+    } finally {
+      await queue.close();
+    }
 
     // The worker re-reads the status at least every second.
     await new Promise((resolve) => setTimeout(resolve, 1_500));
