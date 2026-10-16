@@ -72,7 +72,13 @@ function devMockModule(): Plugin {
   };
 }
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
+  if (command === "build") {
+    // The shared root .env may say NODE_ENV=development (for the server). Vite would
+    // apply it to the build and ship React's development bundle, twice the size.
+    // An empty value, set before any loadEnv() call, makes Vite ignore it.
+    process.env.VITE_USER_NODE_ENV ??= "";
+  }
   // Root .env first (decision D11), then apps/miniapp/.env overrides.
   const env = { ...loadEnv(mode, repoRoot, ""), ...loadEnv(mode, appDir, "") };
   const apiTarget = env.VITE_API_URL || "http://localhost:3000";

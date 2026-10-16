@@ -22,6 +22,8 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm --filter @tgstack/server deploy --prod --trust-lockfile --store-dir /pnpm/store /out/server \
  && pnpm --filter @tgstack/db deploy --trust-lockfile --store-dir /pnpm/store /out/db \
  && cp -r packages/db/prisma packages/db/prisma.config.ts packages/db/src /out/db/
+# pnpm installs peer dependencies too (Prisma CLI, engines, Studio): keep only what runs.
+RUN node docker/prune-node-modules.mjs /out/server
 
 FROM node:${NODE_VERSION}-alpine AS migrate
 RUN apk add --no-cache openssl

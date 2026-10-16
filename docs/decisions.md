@@ -208,3 +208,17 @@ Every non-obvious choice made while building tgstack. Format: **date — decisio
 - **Reason:** one origin means no CORS and first-party cookies; migrations run once before the server and worker start. The supply-chain check of the lockfile already ran on the developer's machine; repeating it in every image build took over six minutes.
 - **Alternatives:** running migrations on server start (races between replicas), a Mini App subdomain.
 
+## D41 — Cancelled broadcasts purge their queued messages (2026-10-22)
+- **Decision:** cancelling a started broadcast adds a `purge` job to the control queue; the worker removes the broadcast's waiting `send` jobs by ID (`<broadcast>-<user>`, walking users in batches). A running snapshot also stops at its next batch.
+- **Reason:** skipped jobs still went through the global rate limiter, so a cancelled 100k broadcast blocked the next one for over an hour.
+- **Alternatives:** scanning the whole queue (`getJobs`), one queue per broadcast (limits are per queue, so the global rate limit would be lost).
+
+## D42 — Worker liveness through a heartbeat file (2026-10-22)
+- **Decision:** the worker touches a file every 10 s while its BullMQ workers run and Redis answers; the Docker healthcheck checks the file's age, and the worker exits after a minute of failures.
+- **Reason:** the worker has no HTTP port, and Docker only restarts containers that exit, not unhealthy ones.
+- **Alternatives:** a tiny HTTP server in the worker (a port to secure and publish for nothing else).
+
+## D43 — Runtime-only configuration where images are shared (2026-10-22)
+- **Decision:** the dashboard reads `BOT_USERNAME` at request time (replacing the build-time `NEXT_PUBLIC_BOT_USERNAME`); the server image keeps only packages reachable through `dependencies` (`docker/prune-node-modules.mjs`, ~430 MB → ~70 MB of `node_modules`); release images are built for amd64 and arm64; Mini App builds ignore `NODE_ENV=development` from the root `.env`.
+- **Reason:** one published image must work for every bot and VPS; `pnpm deploy` installs peers such as the Prisma CLI; Vite applied the server's `NODE_ENV` to the Mini App build and shipped React's development bundle (200 kB → 136 kB gzipped once fixed).
+- **Alternatives:** build arguments per deployment, a slimmer base image only.
