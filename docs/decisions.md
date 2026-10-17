@@ -183,14 +183,12 @@ Every non-obvious choice made while building tgstack. Format: **date — decisio
 - **Alternatives:** the previous layout by audience (`admin/`, `miniapp/`), which split users and products across folders.
 
 ## D37 — Where the implementation departs from the architecture guide (2026-10-22)
-- **Decision:** six deliberate differences from the restructuring guide, each kept because the guide's version would break something or add coupling:
-  1. `/admin` (magic link) stays in `modules/auth/admin-link.update.ts` and payment handlers in `modules/payments/payments.update.ts`: features own their bot entry points, so `bot/` depends on no domain module except `modules/users` (the identity every update needs).
-  2. The pipeline has two steps the guide does not list: `sequentialize` (required by the concurrent runner) and `beforeConversations` (D34); `/cancel` is middleware, not an `@Update` handler, so a wizard cannot swallow it.
-  3. Sessions use our own `RedisStorage` instead of `@grammyjs/storage-redis` (D20).
-  4. Queue names stay in the server (`modules/broadcasts/broadcast-queues.ts`); `@tgstack/shared` only holds values the browser apps also need (locales, cookie name, auth scheme, route prefixes).
-  5. Translations stay split per app (`locales/<locale>/{bot,admin,miniapp}.ftl`), so the Mini App bundle only carries its own strings.
-  6. Next.js 16 renamed `middleware.ts` to `proxy.ts`; `packages/nestjs-grammy` keeps `services/` for the explorer and lifecycle (its public API is unchanged).
-- **Reason:** see each item.
+- **Decision:** the layout follows the guide, including `/admin` in `bot/updates/admin.update.ts`, queue names in `@tgstack/shared` (`QUEUE_NAMES`) and `grammy-core.module.ts` / `grammy.explorer.ts` in `packages/nestjs-grammy` (aligned on 2026-10-22 at the owner's request). Four differences remain, because the guide's version would break something:
+  1. The pipeline has two steps the guide does not list: `sequentialize` (required by the concurrent runner) and `beforeConversations` (D34); `/cancel` is middleware (`bot/middlewares/cancel.middleware.ts`), not an `@Update` handler, so an open wizard cannot swallow it.
+  2. Sessions use our own `RedisStorage` instead of `@grammyjs/storage-redis`, whose published types are broken (D20).
+  3. Translations stay split per app (`locales/<locale>/{bot,admin,miniapp}.ftl`), so the Mini App bundle only carries its own strings.
+  4. Next.js 16 renamed `middleware.ts` to `proxy.ts`.
+- **Reason:** see each item. `bot/` therefore depends on `modules/users` (identity) and `modules/auth` (the `/admin` magic link); the architecture test allows exactly those two.
 - **Alternatives:** following the guide to the letter.
 
 ## D38 — `@tgstack/shared/constants` is the single source of cross-app values (2026-10-22)

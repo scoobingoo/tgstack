@@ -91,13 +91,15 @@ describe("server layers", () => {
     expect(violations(files, (target) => !["config", "infra"].includes(layer(target)))).toEqual([]);
   });
 
-  it("bot/ only reaches into modules/ for the user identity", () => {
+  it("bot/ only reaches into modules/ for identity (users) and sign-in (auth)", () => {
     const files = server.filter((file) => layer(rel(file)) === "bot");
     expect(
       violations(
         files,
         (target) =>
-          ["modules", "examples"].includes(layer(target)) && !target.startsWith("modules/users/"),
+          ["modules", "examples"].includes(layer(target)) &&
+          !target.startsWith("modules/users/") &&
+          !target.startsWith("modules/auth/"),
       ),
     ).toEqual([]);
   });

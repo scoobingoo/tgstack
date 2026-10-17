@@ -48,7 +48,7 @@ flowchart BT
 | `apps/server` | every package | — |
 | `apps/admin`, `apps/miniapp` | `@tgstack/shared`, `@tgstack/i18n` | `@tgstack/db`, server code |
 
-Values the apps must agree on — supported locales, the session cookie name, the `tma` auth scheme, route prefixes — live in `@tgstack/shared` (`src/constants`), never as string literals in an app.
+Values the apps must agree on — supported locales, the session cookie name, the `tma` auth scheme, route prefixes, queue names — live in `@tgstack/shared` (`src/constants`), never as string literals in an app.
 
 ## Two processes, one codebase
 
@@ -83,9 +83,9 @@ apps/server/src/
 ├─ bot/                            the Telegram bot
 │  ├─ bot.module.ts                GrammyModule config: mode, transformers, allowed updates
 │  ├─ middlewares/                 the pipeline, one file per step
-│  └─ updates/                     core commands: /start /help /language
+│  └─ updates/                     core commands: /start /help /language /admin
 ├─ modules/                        core domain, one folder per feature
-│  ├─ auth/                        magic link (/admin), /api/auth/*
+│  ├─ auth/                        magic links, sessions, /api/auth/*
 │  ├─ users/                       upsert, /api/admin/users/*, /api/app/me
 │  ├─ stats/                       /api/admin/stats
 │  ├─ broadcasts/                  controller (REST + SSE), service (state machine), processor (worker)
@@ -100,7 +100,7 @@ A feature folder holds everything about that feature: its module, controllers fo
 examples → modules → bot / common → infra → config
 ```
 
-The only edges against the flow are the identity services every request needs: the bot's user-upsert middleware uses `UsersService`, and the guards in `common/` use `AuthService` and `UsersService`. Nothing outside `examples/` imports from it except `app.module.ts`, which registers the example modules.
+The only edges against the flow are the identity services every request needs: the bot's user-upsert middleware uses `UsersService`, `/admin` (`bot/updates`) uses `AuthService` for the magic link, and the guards in `common/` use `AuthService` and `UsersService`. Nothing outside `examples/` imports from it except `app.module.ts`, which registers the example modules.
 
 The other apps follow the same idea:
 
@@ -166,4 +166,4 @@ Showcase features live in `apps/server/src/examples/`, `apps/miniapp/src/pages/s
 
 ## Where this differs from the original architecture guide
 
-The layout follows the restructuring guide, with six deliberate differences recorded in [decision D37](decisions.md#d37--where-the-implementation-departs-from-the-architecture-guide-2026-10-22): feature-owned bot handlers (`/admin` in `auth`, payment handlers in `payments`), two extra pipeline steps, our own Redis session storage, queue names kept in the server, per-app translation files, and Next 16's `proxy.ts`.
+The layout follows the restructuring guide. Four differences remain, recorded in [decision D37](decisions.md#d37--where-the-implementation-departs-from-the-architecture-guide-2026-10-22): two extra pipeline steps (`sequentialize`, `beforeConversations`) and `/cancel` as middleware, our own Redis session storage, per-app translation files, and Next 16's `proxy.ts`.

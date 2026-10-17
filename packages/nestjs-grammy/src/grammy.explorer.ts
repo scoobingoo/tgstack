@@ -1,16 +1,16 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { DiscoveryService, ExternalContextCreator, MetadataScanner } from "@nestjs/core";
 import type { Bot, Context, Middleware } from "grammy";
-import { GrammyParamsFactory } from "../context/grammy-params.factory.js";
-import { getListenerMetadata, type ListenerMetadata } from "../decorators/listeners.decorator.js";
+import { GrammyParamsFactory } from "./context/grammy-params.factory.js";
+import { getListenerMetadata, type ListenerMetadata } from "./decorators/listeners.decorator.js";
 import {
   GRAMMY_BOT,
   GRAMMY_CONTEXT_TYPE,
   GRAMMY_MODULE_OPTIONS,
   PARAM_ARGS_METADATA,
   UPDATE_METADATA,
-} from "../grammy.constants.js";
-import type { ResolvedGrammyModuleOptions } from "../grammy-options.js";
+} from "./grammy.constants.js";
+import type { ResolvedGrammyModuleOptions } from "./grammy-options.js";
 
 export interface RegisteredHandler {
   className: string;
