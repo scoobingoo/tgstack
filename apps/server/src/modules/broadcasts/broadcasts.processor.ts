@@ -14,7 +14,9 @@ import { QueueFactory } from "../../infra/queue/queue.module.js";
 import {
   BROADCAST_CONTROL_QUEUE,
   BROADCAST_MESSAGE_QUEUE,
+  CONTROL_JOB,
   MESSAGE_ATTEMPTS,
+  messageJobId,
   messageLimiter,
   type SendBroadcastMessageJob,
   SNAPSHOT_BATCH_SIZE,
@@ -39,7 +41,8 @@ type Counter = "sent" | "failed";
 
 /**
  * Worker side of broadcasts (main.worker.ts):
- * - `broadcast-control`: snapshots non-blocked users into `send` jobs.
+ * - `broadcast-control`: `start` snapshots non-blocked users into `send` jobs;
+ *   `purge` removes the waiting `send` jobs of a cancelled broadcast.
  * - `broadcast-messages`: sends one message per job, globally rate-limited.
  *   429 → pause the whole queue for `retry_after`; 403 → mark the user blocked,
  *   count as failed; other 4xx → failed; network/5xx → retried, then failed.
@@ -65,7 +68,7 @@ export class BroadcastsProcessor implements OnApplicationBootstrap, OnApplicatio
     this.messageQueue = this.queues.createQueue(BROADCAST_MESSAGE_QUEUE);
     this.controlWorker = this.queues.createWorker<StartBroadcastJob>(
       BROADCAST_CONTROL_QUEUE,
-      (job) => this.snapshot(job),
+      (job) => (job.name === CONTROL_JOB.purge ? this.purge(job) : this.snapshot(job)),
       { concurrency: 1 },
     );
     this.messageWorker = this.queues.createWorker<SendBroadcastMessageJob>(
@@ -81,6 +84,11 @@ export class BroadcastsProcessor implements OnApplicationBootstrap, OnApplicatio
     // Let in-flight jobs finish, then close the queue (and BullMQ's connections).
     await Promise.all([this.controlWorker?.close(), this.messageWorker?.close()]);
     await this.messageQueue?.close();
+  }
+
+  /** Both queue workers are running (used by the worker heartbeat). */
+  isRunning(): boolean {
+    return Boolean(this.controlWorker?.isRunning() && this.messageWorker?.isRunning());
   }
 
   /** Enqueues one `send` job per non-blocked user, then flips QUEUED → RUNNING with the final total. */
@@ -99,6 +107,7 @@ export class BroadcastsProcessor implements OnApplicationBootstrap, OnApplicatio
     let enqueued = job.data.enqueued ?? 0;
 
     for (;;) {
+      if (enqueued > 0 && !(await this.isStillQueued(broadcastId))) return; // cancelled meanwhile
       const users = await this.prisma.user.findMany({
         where: { isBlocked: false },
         select: { id: true, telegramId: true },
@@ -113,7 +122,7 @@ export class BroadcastsProcessor implements OnApplicationBootstrap, OnApplicatio
           name: "send",
           data: { broadcastId, userId: user.id, chatId: user.telegramId.toString() },
           opts: {
-            jobId: `${broadcastId}-${user.id}`, // a retried snapshot never duplicates a message
+            jobId: messageJobId(broadcastId, user.id),
             attempts: MESSAGE_ATTEMPTS,
             backoff: { type: "exponential", delay: 2_000 },
             removeOnComplete: true,
@@ -135,6 +144,35 @@ export class BroadcastsProcessor implements OnApplicationBootstrap, OnApplicatio
     this.logger.log(`Broadcast ${broadcastId}: ${enqueued} recipient(s) queued`);
     // Every message may already be done (or there were no recipients).
     await this.completeIfDone(broadcastId);
+  }
+
+  /**
+   * Removes the waiting, delayed and retrying `send` jobs of a cancelled broadcast.
+   * Job IDs are derived from user IDs, so this walks the users instead of
+   * scanning the whole queue. Jobs a worker already holds are skipped by `send`.
+   */
+  async purge(job: Job<StartBroadcastJob>): Promise<void> {
+    const { broadcastId } = job.data;
+    this.statusCache.delete(broadcastId);
+    let cursor: string | undefined;
+    let removed = 0;
+    for (;;) {
+      const users = await this.prisma.user.findMany({
+        select: { id: true },
+        orderBy: { id: "asc" },
+        take: SNAPSHOT_BATCH_SIZE,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+      if (users.length === 0) break;
+      const results = await Promise.all(
+        users.map((user) =>
+          this.messageQueue.remove(messageJobId(broadcastId, user.id)).catch(() => 0),
+        ),
+      );
+      removed += results.filter((result) => result === 1).length;
+      cursor = users.at(-1)?.id;
+    }
+    this.logger.log(`Broadcast ${broadcastId} cancelled: ${removed} queued message(s) removed`);
   }
 
   async send(job: Job<SendBroadcastMessageJob>): Promise<void> {
@@ -189,6 +227,14 @@ export class BroadcastsProcessor implements OnApplicationBootstrap, OnApplicatio
       WHERE "id" = ${broadcastId}`;
   }
 
+  private async isStillQueued(broadcastId: string): Promise<boolean> {
+    const row = await this.prisma.broadcast.findUnique({
+      where: { id: broadcastId },
+      select: { status: true },
+    });
+    return row?.status === "QUEUED";
+  }
+
   private async completeIfDone(broadcastId: string): Promise<void> {
     await this.prisma.$executeRaw`
       UPDATE "Broadcast" SET "status" = 'COMPLETED', "finishedAt" = now()
@@ -200,6 +246,10 @@ export class BroadcastsProcessor implements OnApplicationBootstrap, OnApplicatio
     error: Error,
   ): Promise<void> {
     if (!job || job.attemptsMade < (job.opts.attempts ?? 1)) return; // will be retried
+    if (job.name !== CONTROL_JOB.start) {
+      this.logger.warn(`Could not purge broadcast ${job.data.broadcastId}: ${error.message}`);
+      return;
+    }
     this.logger.error(`Broadcast ${job.data.broadcastId} failed: ${error.message}`);
     await this.prisma.broadcast.updateMany({
       where: { id: job.data.broadcastId, status: { in: ["QUEUED", "RUNNING"] } },

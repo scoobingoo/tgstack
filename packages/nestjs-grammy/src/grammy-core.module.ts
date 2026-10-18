@@ -1,3 +1,7 @@
+/**
+ * Core of `GrammyModule`: creating the bot, and its lifecycle — long polling with
+ * the grammY runner, or the webhook route with secret-token verification.
+ */
 import { type RunnerHandle, run } from "@grammyjs/runner";
 import {
   type BeforeApplicationShutdown,
@@ -7,13 +11,54 @@ import {
   type OnApplicationBootstrap,
   type OnModuleInit,
   Optional,
+  type Provider,
 } from "@nestjs/common";
 import { HttpAdapterHost } from "@nestjs/core";
-import { type Bot, type Context, webhookCallback } from "grammy";
+import { Bot, BotError, type Context, webhookCallback } from "grammy";
 import type { Update } from "grammy/types";
-import { GRAMMY_BOT, GRAMMY_MODULE_OPTIONS } from "../grammy.constants.js";
-import type { ResolvedGrammyModuleOptions } from "../grammy-options.js";
-import { GrammyExplorer } from "./grammy-explorer.service.js";
+import { GRAMMY_BOT, GRAMMY_MODULE_OPTIONS } from "./grammy.constants.js";
+import { GrammyExplorer } from "./grammy.explorer.js";
+import type { ResolvedGrammyModuleOptions } from "./grammy-options.js";
+
+/**
+ * Creates the `Bot`, installs transformers, an error boundary and global middleware
+ * (in that order). Handlers from `@Update()` classes are added later, on bootstrap.
+ */
+export function createBot<C extends Context>(options: ResolvedGrammyModuleOptions<C>): Bot<C> {
+  const bot = new Bot<C>(options.token, options.botConfig);
+  for (const transformer of options.transformers ?? []) {
+    bot.api.config.use(transformer);
+  }
+
+  const handleError = options.catch ?? defaultErrorHandler;
+  bot.catch(handleError);
+  // grammY only calls `bot.catch` while polling. This boundary applies the same
+  // handler in webhook mode and to direct `handleUpdate()` calls, so a failing
+  // handler never turns into an HTTP 500 that makes Telegram resend the update.
+  bot.use(async (ctx, next) => {
+    try {
+      await next();
+    } catch (error) {
+      await handleError(
+        error instanceof BotError ? (error as BotError<C>) : new BotError(error, ctx),
+      );
+    }
+  });
+
+  for (const middleware of options.middlewares ?? []) {
+    bot.use(middleware);
+  }
+  return bot;
+}
+
+const logger = new Logger("GrammyModule");
+
+function defaultErrorHandler(err: BotError): void {
+  logger.error(
+    `Error while handling update ${err.ctx.update.update_id}: ${err.message}`,
+    err.error instanceof Error ? err.error.stack : undefined,
+  );
+}
 
 /** Express-style `(req, res)` handler. */
 // biome-ignore lint/suspicious/noExplicitAny: framework-agnostic; works with Express and compatible adapters.
@@ -124,3 +169,16 @@ export class GrammyLifecycle
     this.logger.log(`Webhook set to ${url}`);
   }
 }
+
+/** Providers shared by `forRoot` and `forRootAsync`: the bot, discovery and lifecycle. */
+export const coreProviders: Provider[] = [
+  {
+    provide: GRAMMY_BOT,
+    useFactory: (options: ResolvedGrammyModuleOptions) => createBot(options),
+    inject: [GRAMMY_MODULE_OPTIONS],
+  },
+  GrammyExplorer,
+  GrammyLifecycle,
+];
+
+export const coreExports = [GRAMMY_BOT, GRAMMY_MODULE_OPTIONS, GrammyExplorer, GrammyLifecycle];

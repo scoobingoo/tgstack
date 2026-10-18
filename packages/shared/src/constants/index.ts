@@ -26,3 +26,11 @@ export const API_ROUTES = {
   /** Mini App endpoints: `Authorization: tma <initData>`. */
   app: "/api/app",
 } as const;
+
+/** BullMQ queues. The API process produces jobs, the worker process consumes them. */
+export const QUEUE_NAMES = {
+  /** One `start` job per broadcast (snapshots recipients), `purge` after a cancel. */
+  broadcastControl: "broadcast-control",
+  /** One `send` job per recipient, rate-limited globally. */
+  broadcastMessages: "broadcast-messages",
+} as const;

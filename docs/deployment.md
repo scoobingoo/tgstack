@@ -36,7 +36,7 @@ Edit `.env`. The production compose file sets the URLs, `NODE_ENV`, `BOT_MODE=we
 | `BOT_WEBHOOK_SECRET` | `openssl rand -hex 32` |
 | `JWT_SECRET` | `openssl rand -hex 32` |
 | `ADMIN_TELEGRAM_IDS` | your Telegram user ID (ask [@userinfobot](https://t.me/userinfobot)) |
-| `NEXT_PUBLIC_BOT_USERNAME` | optional: bot username for the "Open the bot" button on the login page |
+| `BOT_USERNAME` | optional: bot username for the "Open the bot" button on the login page |
 
 Then:
 
@@ -89,8 +89,6 @@ TGSTACK_TAG=1.0.0
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d --no-build
 ```
-
-`NEXT_PUBLIC_*` values are compiled into the admin image, so the published admin image has no "Open the bot" button; build the admin image yourself if you want it.
 
 ## Operations
 

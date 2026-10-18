@@ -14,8 +14,8 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 const envSchema = z.object({
   /** Where the tgstack server listens. `/api/*` is proxied there so the session cookie stays first-party. */
   NEXT_PUBLIC_API_URL: z.url().default("http://localhost:3000"),
-  /** Bot username (without @), used for the "Open the bot" link on the login page. */
-  NEXT_PUBLIC_BOT_USERNAME: z
+  /** Bot username (without @) for the "Open the bot" link on /login. Read at request time. */
+  BOT_USERNAME: z
     .string()
     .regex(/^[A-Za-z0-9_]{5,32}$/, "must be a Telegram username without @")
     .optional(),
@@ -40,7 +40,6 @@ const config: NextConfig = {
   reactStrictMode: true,
   env: {
     NEXT_PUBLIC_API_URL: env.NEXT_PUBLIC_API_URL,
-    NEXT_PUBLIC_BOT_USERNAME: env.NEXT_PUBLIC_BOT_USERNAME ?? "",
   },
   // Same-origin API in development. In production the reverse proxy (Caddy) routes /api first.
   async rewrites() {

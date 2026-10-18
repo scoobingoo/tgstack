@@ -10,6 +10,7 @@ import { BotSetupService } from "./bot-setup.service.js";
 import { BotMiddlewares } from "./middlewares/bot-middlewares.service.js";
 import { BotErrorHandler } from "./middlewares/error-boundary.js";
 import { BotI18n } from "./middlewares/i18n.middleware.js";
+import { AdminUpdate } from "./updates/admin.update.js";
 import { LanguageUpdate } from "./updates/language.update.js";
 import { StartUpdate } from "./updates/start.update.js";
 
@@ -89,7 +90,7 @@ export class BotModule {
           },
         }),
       ],
-      providers: [StartUpdate, LanguageUpdate, BotSetupService],
+      providers: [StartUpdate, LanguageUpdate, AdminUpdate, BotSetupService],
       exports: [BotCoreModule],
     };
   }

@@ -6,7 +6,7 @@
 
 | Route | What |
 |---|---|
-| `/login` | How to sign in: send `/admin` to the bot (optionally a button to open it, set `NEXT_PUBLIC_BOT_USERNAME`) |
+| `/login` | How to sign in: send `/admin` to the bot (optionally a button to open it, set `BOT_USERNAME`) |
 | `/auth/callback?token=…` | Exchanges the magic-link token for the session cookie, then opens the dashboard |
 | `/` | Stat cards, 30-day sign-up chart, recent payments |
 | `/users` | Search (name, @username, Telegram ID), role/status filters, pagination; a drawer with details, payments and an admin switch |

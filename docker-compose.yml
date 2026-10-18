@@ -108,6 +108,19 @@ services:
     image: tgstack-server:local
     command: ["node", "dist/main.worker.js"]
     environment: *app-env
+    healthcheck:
+      # Written every 10 s by the worker while it is healthy (src/worker-heartbeat.ts).
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "const f=require('node:os').tmpdir()+'/tgstack-worker.heartbeat';process.exit(Date.now()-require('node:fs').statSync(f).mtimeMs<60000?0:1)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   admin:
     profiles: [full]
@@ -115,8 +128,9 @@ services:
     build:
       context: .
       dockerfile: docker/admin.Dockerfile
-      args:
-        NEXT_PUBLIC_BOT_USERNAME: ${NEXT_PUBLIC_BOT_USERNAME:-}
+    environment:
+      # Read at request time: the "Open the bot" button on /login.
+      BOT_USERNAME: ${BOT_USERNAME:-}
     restart: unless-stopped
 
   miniapp:
