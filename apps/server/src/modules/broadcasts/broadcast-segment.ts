@@ -1,6 +1,5 @@
 import type { Prisma } from "@tgstack/db";
 import { type BroadcastSegment, broadcastSegmentSchema } from "@tgstack/shared";
-// TODO(review): verify edge-case error handling before merge
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
