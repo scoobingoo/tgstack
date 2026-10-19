@@ -89,6 +89,7 @@ col-progress = Progress
 col-created = Created
 col-author = Author
 broadcast-status-DRAFT = Draft
+broadcast-status-SCHEDULED = Scheduled
 broadcast-status-QUEUED = Queued
 broadcast-status-RUNNING = Sending
 broadcast-status-COMPLETED = Completed
@@ -105,8 +106,8 @@ composer-save = Save draft
 composer-send-preview = Send preview to me
 composer-preview-sent = Preview sent to your Telegram
 composer-start = Start broadcast
-composer-start-confirm-title = Send to every user?
-composer-start-confirm = The message goes to all users who have not blocked the bot, at the configured rate. This cannot be undone, but you can cancel while it is sending.
+composer-start-confirm-title = Send it now?
+composer-start-confirm = The message goes to everyone in the audience who has not blocked the bot, at the configured rate. This cannot be undone, but you can cancel while it is sending.
 composer-cancel-broadcast = Cancel broadcast
 composer-cancel-confirm-title = Cancel this broadcast?
 composer-cancel-confirm = Users who have not received it yet will not get it.
@@ -144,3 +145,40 @@ payment-refund = Refund
 payment-refund-title = Refund { $amount } ⭐ to { $name }?
 payment-refund-confirm = The Stars go back to the user's balance through Telegram. This cannot be undone.
 payment-refunded = Payment refunded
+
+## Audience (segments)
+audience-title = Audience
+audience-languages = Languages
+audience-languages-help = None selected: every language.
+audience-activity = Activity
+audience-activity-any = Everyone
+audience-activity-active = Active within (days)
+audience-activity-inactive = Inactive for (days)
+audience-days = Number of days
+audience-purchases = Purchases
+audience-purchases-any = Everyone
+audience-purchases-buyers = Paid at least once
+audience-purchases-non-buyers = Never paid
+audience-estimate = { $count ->
+    [one] { $formatted } recipient right now
+   *[other] { $formatted } recipients right now
+}
+audience-estimate-invalid = Complete the conditions to see the number of recipients.
+audience-help = Conditions combine. Users who blocked the bot never receive broadcasts. The audience is computed again when sending starts.
+audience-everyone = Everyone who has not blocked the bot
+audience-summary-locales = Languages: { $locales }
+audience-summary-active = Active within the last { $days } days
+audience-summary-inactive = Inactive for at least { $days } days
+
+## Scheduling
+schedule-button = Schedule
+schedule-title = Schedule this broadcast
+schedule-description = It starts automatically at this time (your time zone: { $zone }). Until then you can send it now, reschedule it or move it back to drafts.
+schedule-at = Date and time
+schedule-save = Schedule
+schedule-reschedule = Reschedule
+schedule-unschedule = Back to draft
+schedule-send-now = Send now
+scheduled-for = Scheduled for { $date }
+scheduled-help = The worker starts it within about 15 seconds of that time.
+composer-read-only-scheduled = Scheduled broadcasts cannot be edited. Move it back to drafts to change it.

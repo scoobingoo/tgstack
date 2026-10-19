@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { SUPPORTED_LOCALES } from "../constants/index.js";
 import { htmlTextLength } from "../utils/html.js";
 import { isoDateSchema, paginationQuerySchema } from "./common.js";
 
 export const broadcastStatusSchema = z.enum([
   "DRAFT",
+  "SCHEDULED",
   "QUEUED",
   "RUNNING",
   "COMPLETED",
@@ -24,6 +26,33 @@ export const MESSAGE_TEXT_LIMIT = 4096;
 export const PHOTO_CAPTION_LIMIT = 1024;
 export const BUTTON_TEXT_LIMIT = 64;
 
+/**
+ * Who receives a broadcast. Every condition is optional and they combine with
+ * AND; users who blocked the bot are always excluded. Evaluated when the
+ * broadcast starts, not when it is saved.
+ */
+export const broadcastSegmentSchema = z
+  .object({
+    /** Users whose locale (bot `/language`, Mini App) is one of these. */
+    locales: z.array(z.enum(SUPPORTED_LOCALES)).min(1).optional(),
+    /** Seen (any update or Mini App request) within the last N days. */
+    activeWithinDays: z.number().int().min(1).max(365).optional(),
+    /** Not seen for at least N days — win-back campaigns. */
+    inactiveForDays: z.number().int().min(1).max(365).optional(),
+    /** `buyers`: at least one paid payment; `non-buyers`: none. */
+    purchases: z.enum(["buyers", "non-buyers"]).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.activeWithinDays && value.inactiveForDays) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["inactiveForDays"],
+        message: "choose either active within or inactive for, not both",
+      });
+    }
+  });
+export type BroadcastSegment = z.infer<typeof broadcastSegmentSchema>;
+
 export const broadcastContentSchema = z
   .object({
     /** Telegram HTML parse mode. */
@@ -37,6 +66,8 @@ export const broadcastContentSchema = z
       .url({ protocol: /^(https?|tg)$/ })
       .nullable()
       .optional(),
+    /** Recipients; omitted or null = everyone who did not block the bot. */
+    segment: broadcastSegmentSchema.nullable().optional(),
   })
   .superRefine((value, ctx) => {
     const limit = value.imageUrl ? PHOTO_CAPTION_LIMIT : MESSAGE_TEXT_LIMIT;
@@ -63,6 +94,7 @@ export const broadcastProgressSchema = z.object({
   total: z.number().int(),
   sent: z.number().int(),
   failed: z.number().int(),
+  scheduledAt: isoDateSchema.nullable(),
   startedAt: isoDateSchema.nullable(),
   finishedAt: isoDateSchema.nullable(),
 });
@@ -73,6 +105,7 @@ export const broadcastSchema = broadcastProgressSchema.extend({
   imageUrl: z.string().nullable(),
   buttonText: z.string().nullable(),
   buttonUrl: z.string().nullable(),
+  segment: broadcastSegmentSchema.nullable(),
   createdAt: isoDateSchema,
   author: z.object({ id: z.string(), firstName: z.string(), username: z.string().nullable() }),
 });
@@ -82,3 +115,19 @@ export const listBroadcastsQuerySchema = paginationQuerySchema.extend({
   status: broadcastStatusSchema.optional(),
 });
 export type ListBroadcastsQuery = z.infer<typeof listBroadcastsQuerySchema>;
+
+/** Latest schedule allowed (Telegram content and audiences change; plan at most a year ahead). */
+export const MAX_SCHEDULE_DAYS = 365;
+
+/** `POST /api/admin/broadcasts/:id/schedule` */
+export const scheduleBroadcastSchema = z.object({
+  /** ISO 8601 with a time zone, e.g. `2026-11-01T09:00:00+07:00`. Must be in the future. */
+  scheduledAt: z.iso.datetime({ offset: true }),
+});
+export type ScheduleBroadcastBody = z.infer<typeof scheduleBroadcastSchema>;
+
+/** `POST /api/admin/broadcasts/audience`: how many users a segment reaches right now. */
+export const audienceQuerySchema = z.object({ segment: broadcastSegmentSchema.nullable() });
+export type AudienceQueryBody = z.infer<typeof audienceQuerySchema>;
+export const audienceSchema = z.object({ count: z.number().int() });
+export type AudienceDto = z.infer<typeof audienceSchema>;

@@ -20,6 +20,10 @@ import {
 } from "@nestjs/swagger";
 import type { User } from "@tgstack/db";
 import {
+  type AudienceDto,
+  type AudienceQueryBody,
+  audienceQuerySchema,
+  audienceSchema,
   type BroadcastContentBody,
   type BroadcastDto,
   type BroadcastProgressDto,
@@ -31,6 +35,8 @@ import {
   listBroadcastsQuerySchema,
   type Paginated,
   paginatedSchema,
+  type ScheduleBroadcastBody,
+  scheduleBroadcastSchema,
 } from "@tgstack/shared";
 import {
   distinctUntilChanged,
@@ -100,18 +106,47 @@ export class BroadcastsController {
     await this.broadcasts.preview(id, admin);
   }
 
+  @Post("audience")
+  @HttpCode(200)
+  @ApiOperation({ summary: "How many users a segment reaches right now" })
+  @ApiOkResponse({ standardSchema: audienceSchema })
+  audience(@Body({ schema: audienceQuerySchema }) body: AudienceQueryBody): Promise<AudienceDto> {
+    return this.broadcasts.audience(body.segment);
+  }
+
+  @Post(":id/schedule")
+  @HttpCode(200)
+  @ApiOperation({ summary: "Send later (DRAFT/SCHEDULED → SCHEDULED)" })
+  @ApiOkResponse({ standardSchema: broadcastProgressSchema })
+  @ApiConflictResponse({ description: "Already started", standardSchema: errorResponseSchema })
+  schedule(
+    @Param("id") id: string,
+    @Body({ schema: scheduleBroadcastSchema }) body: ScheduleBroadcastBody,
+  ): Promise<BroadcastProgressDto> {
+    return this.broadcasts.schedule(id, new Date(body.scheduledAt));
+  }
+
+  @Post(":id/unschedule")
+  @HttpCode(200)
+  @ApiOperation({ summary: "Back to draft (SCHEDULED → DRAFT)" })
+  @ApiOkResponse({ standardSchema: broadcastProgressSchema })
+  @ApiConflictResponse({ description: "Not scheduled", standardSchema: errorResponseSchema })
+  unschedule(@Param("id") id: string): Promise<BroadcastProgressDto> {
+    return this.broadcasts.unschedule(id);
+  }
+
   @Post(":id/start")
   @HttpCode(200)
-  @ApiOperation({ summary: "Start sending (DRAFT → QUEUED)" })
+  @ApiOperation({ summary: "Start sending now (DRAFT/SCHEDULED → QUEUED)" })
   @ApiOkResponse({ standardSchema: broadcastProgressSchema })
-  @ApiConflictResponse({ description: "Not a draft", standardSchema: errorResponseSchema })
+  @ApiConflictResponse({ description: "Already started", standardSchema: errorResponseSchema })
   start(@Param("id") id: string): Promise<BroadcastProgressDto> {
     return this.broadcasts.start(id);
   }
 
   @Post(":id/cancel")
   @HttpCode(200)
-  @ApiOperation({ summary: "Cancel a draft, queued or running broadcast" })
+  @ApiOperation({ summary: "Cancel a draft, scheduled, queued or running broadcast" })
   @ApiOkResponse({ standardSchema: broadcastProgressSchema })
   @ApiConflictResponse({ description: "Already finished", standardSchema: errorResponseSchema })
   cancel(@Param("id") id: string): Promise<BroadcastProgressDto> {

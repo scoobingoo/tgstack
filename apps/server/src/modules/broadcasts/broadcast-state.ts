@@ -4,13 +4,17 @@ import type { BroadcastStatus } from "@tgstack/db";
 /**
  * Allowed status changes:
  *
- *     DRAFT ──start──▶ QUEUED ──snapshot──▶ RUNNING ──all handled──▶ COMPLETED
- *       │                │                     │
- *       └────cancel──────┴────────cancel───────┴──▶ CANCELLED
- *                        └──snapshot failed──▶ FAILED
+ *     DRAFT ──schedule──▶ SCHEDULED ──due (worker)──┐
+ *       ▲  ◀──unschedule──┘  │  ▲ reschedule        │
+ *       │                    │  └─┘                 ▼
+ *       ├──start (now)───────┴──start (now)────▶ QUEUED ──snapshot──▶ RUNNING ──all handled──▶ COMPLETED
+ *       │                                         │                    │
+ *       └──────────────cancel (any of these)──────┴────────────────────┴──▶ CANCELLED
+ *                                                 └──snapshot failed──▶ FAILED
  */
 const TRANSITIONS: Record<BroadcastStatus, readonly BroadcastStatus[]> = {
-  DRAFT: ["QUEUED", "CANCELLED"],
+  DRAFT: ["SCHEDULED", "QUEUED", "CANCELLED"],
+  SCHEDULED: ["SCHEDULED", "DRAFT", "QUEUED", "CANCELLED"],
   QUEUED: ["RUNNING", "CANCELLED", "FAILED"],
   RUNNING: ["COMPLETED", "CANCELLED", "FAILED"],
   COMPLETED: [],
@@ -18,11 +22,13 @@ const TRANSITIONS: Record<BroadcastStatus, readonly BroadcastStatus[]> = {
   FAILED: [],
 };
 
-export type BroadcastAction = "edit" | "start" | "cancel";
+export type BroadcastAction = "edit" | "start" | "schedule" | "unschedule" | "cancel";
 
 const ACTION_TARGET: Record<BroadcastAction, BroadcastStatus | null> = {
   edit: null,
   start: "QUEUED",
+  schedule: "SCHEDULED",
+  unschedule: "DRAFT",
   cancel: "CANCELLED",
 };
 

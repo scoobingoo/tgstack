@@ -3,9 +3,10 @@
 Anything that is out of scope for v1.0 (see `PLAN.md` § 1 and § 4 Phase 9) or discovered while building lands here.
 
 ## Post-v1 (from PLAN.md Phase 9 — do not start without approval)
+Scheduled broadcasts and user segments shipped on 2026-10-22 (D44). Follow-ups: segments by product bought, saved segments, recurring broadcasts.
+
 - `npx create-tgstack` CLI to pick modules (admin, miniapp, payments, i18n).
 - VietQR / PayOS payment providers (the `PaymentProvider` interface is designed for them).
-- Scheduled broadcasts and user segments (by locale, activity, purchase).
 - Analytics: retention cohorts, funnel for the Mini App.
 - AI assistant module (LLM replies + tools).
 - Multi-bot support.

@@ -9,6 +9,7 @@ const BROADCAST_VARIANT: Record<
   "default" | "secondary" | "destructive" | "outline"
 > = {
   DRAFT: "outline",
+  SCHEDULED: "secondary",
   QUEUED: "secondary",
   RUNNING: "default",
   COMPLETED: "secondary",

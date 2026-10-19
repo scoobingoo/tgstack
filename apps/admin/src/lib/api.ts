@@ -1,5 +1,7 @@
 import {
+  audienceSchema,
   type BroadcastContentBody,
+  type BroadcastSegment,
   broadcastProgressSchema,
   broadcastSchema,
   type CreateProductBody,
@@ -122,6 +124,23 @@ export const api = {
       request(`/admin/broadcasts/${id}/cancel`, {
         method: "POST",
         schema: broadcastProgressSchema,
+      }),
+    schedule: (id: string, scheduledAt: string) =>
+      request(`/admin/broadcasts/${id}/schedule`, {
+        method: "POST",
+        body: { scheduledAt },
+        schema: broadcastProgressSchema,
+      }),
+    unschedule: (id: string) =>
+      request(`/admin/broadcasts/${id}/unschedule`, {
+        method: "POST",
+        schema: broadcastProgressSchema,
+      }),
+    audience: (segment: BroadcastSegment | null) =>
+      request("/admin/broadcasts/audience", {
+        method: "POST",
+        body: { segment },
+        schema: audienceSchema,
       }),
     progress: (id: string) =>
       request(`/admin/broadcasts/${id}`, { schema: broadcastProgressSchema }),

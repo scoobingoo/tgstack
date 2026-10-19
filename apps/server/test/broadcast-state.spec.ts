@@ -8,11 +8,25 @@ import {
   isTerminal,
 } from "../src/modules/broadcasts/broadcast-state.js";
 
-const ALL: BroadcastStatus[] = ["DRAFT", "QUEUED", "RUNNING", "COMPLETED", "CANCELLED", "FAILED"];
+const ALL: BroadcastStatus[] = [
+  "DRAFT",
+  "SCHEDULED",
+  "QUEUED",
+  "RUNNING",
+  "COMPLETED",
+  "CANCELLED",
+  "FAILED",
+];
 
 describe("broadcast state machine", () => {
   it.each([
     ["DRAFT", "QUEUED", true],
+    ["DRAFT", "SCHEDULED", true],
+    ["SCHEDULED", "SCHEDULED", true],
+    ["SCHEDULED", "QUEUED", true],
+    ["SCHEDULED", "DRAFT", true],
+    ["SCHEDULED", "CANCELLED", true],
+    ["SCHEDULED", "RUNNING", false],
     ["DRAFT", "CANCELLED", true],
     ["DRAFT", "RUNNING", false],
     ["DRAFT", "COMPLETED", false],
@@ -33,8 +47,10 @@ describe("broadcast state machine", () => {
   });
 
   it("knows which statuses allow each action", () => {
-    expect(allowedFrom("start")).toEqual(["DRAFT"]);
-    expect(allowedFrom("cancel")).toEqual(["DRAFT", "QUEUED", "RUNNING"]);
+    expect(allowedFrom("start")).toEqual(["DRAFT", "SCHEDULED"]);
+    expect(allowedFrom("schedule")).toEqual(["DRAFT", "SCHEDULED"]);
+    expect(allowedFrom("unschedule")).toEqual(["SCHEDULED"]);
+    expect(allowedFrom("cancel")).toEqual(["DRAFT", "SCHEDULED", "QUEUED", "RUNNING"]);
     expect(allowedFrom("edit")).toEqual(["DRAFT"]);
   });
 
@@ -49,6 +65,8 @@ describe("broadcast state machine", () => {
       "Cannot cancel a cancelled broadcast",
     );
     expect(() => assertAction("RUNNING", "edit")).toThrow("Cannot edit a running broadcast");
+    expect(() => assertAction("SCHEDULED", "edit")).toThrow("Cannot edit a scheduled broadcast");
+    expect(() => assertAction("DRAFT", "unschedule")).toThrow(ConflictException);
     expect(() => assertAction("DRAFT", "start")).not.toThrow();
   });
 });

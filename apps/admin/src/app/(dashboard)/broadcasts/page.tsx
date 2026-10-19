@@ -53,7 +53,16 @@ export default function BroadcastsPage() {
     {
       id: "status",
       header: t("col-status"),
-      cell: ({ row }) => <BroadcastStatusBadge status={row.original.status} />,
+      cell: ({ row }) => (
+        <div className="space-y-1">
+          <BroadcastStatusBadge status={row.original.status} />
+          {row.original.status === "SCHEDULED" ? (
+            <p className="text-xs text-muted-foreground">
+              {formatDateTime(row.original.scheduledAt, locale)}
+            </p>
+          ) : null}
+        </div>
+      ),
     },
     {
       id: "progress",
