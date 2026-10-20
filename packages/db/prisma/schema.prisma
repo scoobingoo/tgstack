@@ -21,6 +21,8 @@ enum Role {
 
 enum BroadcastStatus {
   DRAFT
+  /// Waits for `scheduledAt`; the worker starts it.
+  SCHEDULED
   QUEUED
   RUNNING
   COMPLETED
@@ -34,22 +36,22 @@ enum PaymentStatus {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  telegramId   BigInt    @unique
+  id           String      @id @default(cuid())
+  telegramId   BigInt      @unique
   username     String?
   firstName    String
   lastName     String?
   /// IETF language tag reported by Telegram.
   languageCode String?
   /// Locale chosen by the user (bot `/language`, Mini App profile).
-  locale       String    @default("en")
-  role         Role      @default(USER)
+  locale       String      @default("en")
+  role         Role        @default(USER)
   /// The user blocked the bot (Bot API 403) — skipped by broadcasts.
-  isBlocked    Boolean   @default(false)
+  isBlocked    Boolean     @default(false)
   /// EXAMPLE: answers of the onboarding wizard. Safe to drop with the example.
   onboarding   Json?
-  createdAt    DateTime  @default(now())
-  lastSeenAt   DateTime  @default(now())
+  createdAt    DateTime    @default(now())
+  lastSeenAt   DateTime    @default(now())
   payments     Payment[]
   broadcasts   Broadcast[] @relation("BroadcastAuthor")
 
@@ -59,23 +61,28 @@ model User {
 }
 
 model Broadcast {
-  id         String          @id @default(cuid())
+  id          String          @id @default(cuid())
   /// Message text in Telegram HTML parse mode.
-  text       String
-  imageUrl   String?
-  buttonText String?
-  buttonUrl  String?
-  status     BroadcastStatus @default(DRAFT)
-  total      Int             @default(0)
-  sent       Int             @default(0)
-  failed     Int             @default(0)
-  authorId   String
-  author     User            @relation("BroadcastAuthor", fields: [authorId], references: [id])
-  createdAt  DateTime        @default(now())
-  startedAt  DateTime?
-  finishedAt DateTime?
+  text        String
+  imageUrl    String?
+  buttonText  String?
+  buttonUrl   String?
+  status      BroadcastStatus @default(DRAFT)
+  /// When a SCHEDULED broadcast starts.
+  scheduledAt DateTime?
+  /// Recipient filter (`broadcastSegmentSchema` in @tgstack/shared); null = every user who did not block the bot.
+  segment     Json?
+  total       Int             @default(0)
+  sent        Int             @default(0)
+  failed      Int             @default(0)
+  authorId    String
+  author      User            @relation("BroadcastAuthor", fields: [authorId], references: [id])
+  createdAt   DateTime        @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
 
   @@index([createdAt])
+  @@index([status, scheduledAt])
 }
 
 /// EXAMPLE: shop products sold for Telegram Stars.

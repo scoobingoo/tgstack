@@ -15,6 +15,7 @@ import {
   BROADCAST_CONTROL_QUEUE,
   BROADCAST_MESSAGE_QUEUE,
   CONTROL_JOB,
+  enqueueStart,
   MESSAGE_ATTEMPTS,
   messageJobId,
   messageLimiter,
@@ -22,6 +23,7 @@ import {
   SNAPSHOT_BATCH_SIZE,
   type StartBroadcastJob,
 } from "./broadcast-queues.js";
+import { parseSegment, segmentWhere } from "./broadcast-segment.js";
 import { sendBroadcastMessage } from "./broadcast-sender.js";
 
 export const WORKER_BOT_API = Symbol("WORKER_BOT_API");
@@ -32,7 +34,11 @@ export interface BroadcastsProcessorOptions {
   ratePerSecond?: number;
   /** Parallel send jobs per worker process (the limiter still paces them). */
   concurrency?: number;
+  /** How often due scheduled broadcasts are looked for (default 15 s). Tests lower it. */
+  schedulePollMs?: number;
 }
+
+const SCHEDULE_POLL_MS = 15_000;
 
 /** How long the worker trusts a cached broadcast status (cancellation latency). */
 const STATUS_CACHE_MS = 1_000;
@@ -52,6 +58,8 @@ export class BroadcastsProcessor implements OnApplicationBootstrap, OnApplicatio
   private readonly logger = new Logger("BroadcastsProcessor");
   private readonly statusCache = new Map<string, { value: Broadcast | null; at: number }>();
   private messageQueue!: Queue<SendBroadcastMessageJob>;
+  private controlQueue!: Queue<StartBroadcastJob>;
+  private scheduleTimer?: NodeJS.Timeout;
   private controlWorker!: Worker<StartBroadcastJob>;
   private messageWorker!: Worker<SendBroadcastMessageJob>;
 
@@ -66,6 +74,7 @@ export class BroadcastsProcessor implements OnApplicationBootstrap, OnApplicatio
   onApplicationBootstrap(): void {
     const rate = this.options.ratePerSecond ?? this.config.env.BROADCAST_RATE_PER_SECOND;
     this.messageQueue = this.queues.createQueue(BROADCAST_MESSAGE_QUEUE);
+    this.controlQueue = this.queues.createQueue(BROADCAST_CONTROL_QUEUE);
     this.controlWorker = this.queues.createWorker<StartBroadcastJob>(
       BROADCAST_CONTROL_QUEUE,
       (job) => (job.name === CONTROL_JOB.purge ? this.purge(job) : this.snapshot(job)),
@@ -77,13 +86,21 @@ export class BroadcastsProcessor implements OnApplicationBootstrap, OnApplicatio
       { concurrency: this.options.concurrency ?? 4, limiter: messageLimiter(rate) },
     );
     this.controlWorker.on("failed", (job, error) => void this.onSnapshotFailed(job, error));
+    const releaseDue = () =>
+      void this.releaseDueBroadcasts().catch((error: Error) =>
+        this.logger.error(`Scheduled broadcasts: ${error.message}`),
+      );
+    releaseDue();
+    this.scheduleTimer = setInterval(releaseDue, this.options.schedulePollMs ?? SCHEDULE_POLL_MS);
+    this.scheduleTimer.unref();
     this.logger.log(`Broadcast worker started (${rate} msg/s)`);
   }
 
   async onApplicationShutdown(): Promise<void> {
-    // Let in-flight jobs finish, then close the queue (and BullMQ's connections).
+    clearInterval(this.scheduleTimer);
+    // Let in-flight jobs finish, then close the queues (and BullMQ's connections).
     await Promise.all([this.controlWorker?.close(), this.messageWorker?.close()]);
-    await this.messageQueue?.close();
+    await Promise.all([this.messageQueue?.close(), this.controlQueue?.close()]);
   }
 
   /** Both queue workers are running (used by the worker heartbeat). */
@@ -91,25 +108,49 @@ export class BroadcastsProcessor implements OnApplicationBootstrap, OnApplicatio
     return Boolean(this.controlWorker?.isRunning() && this.messageWorker?.isRunning());
   }
 
-  /** Enqueues one `send` job per non-blocked user, then flips QUEUED → RUNNING with the final total. */
+  /**
+   * Starts the scheduled broadcasts that are due. Only enqueues their `start`
+   * job (idempotent job ID); the snapshot claims them, so several workers can
+   * sweep at the same time.
+   */
+  async releaseDueBroadcasts(): Promise<number> {
+    const due = await this.prisma.broadcast.findMany({
+      where: { status: "SCHEDULED", scheduledAt: { lte: new Date() } },
+      select: { id: true },
+      orderBy: { scheduledAt: "asc" },
+      take: 50,
+    });
+    for (const { id } of due) await enqueueStart(this.controlQueue, id);
+    return due.length;
+  }
+
+  /**
+   * Enqueues one `send` job per recipient of the broadcast's segment, then flips
+   * QUEUED → RUNNING with the final total. A due SCHEDULED broadcast is claimed
+   * (SCHEDULED → QUEUED) first.
+   */
   async snapshot(job: Job<StartBroadcastJob>): Promise<void> {
     const { broadcastId } = job.data;
+    await this.prisma.broadcast.updateMany({
+      where: { id: broadcastId, status: "SCHEDULED", scheduledAt: { lte: new Date() } },
+      data: { status: "QUEUED" },
+    });
     const broadcast = await this.prisma.broadcast.findUnique({ where: { id: broadcastId } });
-    if (broadcast?.status !== "QUEUED") return; // cancelled before we got here
+    if (broadcast?.status !== "QUEUED") return; // cancelled, unscheduled or not due
 
+    // The segment is evaluated at the first snapshot attempt, so retries see the same audience.
+    const startedAt = broadcast.startedAt ?? new Date();
     if (!broadcast.startedAt) {
-      await this.prisma.broadcast.update({
-        where: { id: broadcastId },
-        data: { startedAt: new Date() },
-      });
+      await this.prisma.broadcast.update({ where: { id: broadcastId }, data: { startedAt } });
     }
+    const recipients = segmentWhere(parseSegment(broadcast.segment), startedAt);
     let cursor = job.data.cursor;
     let enqueued = job.data.enqueued ?? 0;
 
     for (;;) {
       if (enqueued > 0 && !(await this.isStillQueued(broadcastId))) return; // cancelled meanwhile
       const users = await this.prisma.user.findMany({
-        where: { isBlocked: false },
+        where: recipients,
         select: { id: true, telegramId: true },
         orderBy: { id: "asc" },
         take: SNAPSHOT_BATCH_SIZE,

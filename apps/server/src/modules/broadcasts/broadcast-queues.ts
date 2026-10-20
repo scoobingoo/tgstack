@@ -1,4 +1,5 @@
 import { QUEUE_NAMES } from "@tgstack/shared";
+import type { Queue } from "bullmq";
 
 /**
  * Control queue: a `start` job per broadcast snapshots the recipients; a `purge`
@@ -41,4 +42,26 @@ export function messageLimiter(ratePerSecond: number): { max: number; duration: 
 /** One message job per broadcast and user: a retried snapshot never duplicates a message. */
 export function messageJobId(broadcastId: string, userId: string): string {
   return `${broadcastId}-${userId}`;
+}
+
+/**
+ * Adds the `start` job of a broadcast. The job ID is fixed, so a broadcast that
+ * is already waiting to start ("send now" racing the scheduler, two workers
+ * sweeping) is never started twice.
+ */
+export async function enqueueStart(
+  queue: Queue<StartBroadcastJob>,
+  broadcastId: string,
+): Promise<void> {
+  await queue.add(
+    CONTROL_JOB.start,
+    { broadcastId },
+    {
+      jobId: `start-${broadcastId}`,
+      attempts: 3,
+      backoff: { type: "exponential", delay: 5_000 },
+      removeOnComplete: true,
+      removeOnFail: 100,
+    },
+  );
 }

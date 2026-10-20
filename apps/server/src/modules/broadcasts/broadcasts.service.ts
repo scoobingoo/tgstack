@@ -5,20 +5,24 @@ import {
   NotFoundException,
   type OnApplicationShutdown,
 } from "@nestjs/common";
-import type { Broadcast, Prisma, User } from "@tgstack/db";
+import { type Broadcast, Prisma, type User } from "@tgstack/db";
 import { InjectBot } from "@tgstack/nestjs-grammy";
-import type {
-  BroadcastContentBody,
-  BroadcastDto,
-  BroadcastProgressDto,
-  ListBroadcastsQuery,
-  Paginated,
+import {
+  type AudienceDto,
+  type BroadcastContentBody,
+  type BroadcastDto,
+  type BroadcastProgressDto,
+  type BroadcastSegment,
+  type ListBroadcastsQuery,
+  MAX_SCHEDULE_DAYS,
+  type Paginated,
 } from "@tgstack/shared";
 import type { Queue } from "bullmq";
 import { type Bot, GrammyError } from "grammy";
 import type { BotContext } from "../../bot/bot.context.js";
 import { PrismaService } from "../../infra/prisma/prisma.service.js";
-import { CONTROL_JOB, type StartBroadcastJob } from "./broadcast-queues.js";
+import { CONTROL_JOB, enqueueStart, type StartBroadcastJob } from "./broadcast-queues.js";
+import { parseSegment, segmentWhere } from "./broadcast-segment.js";
 import { sendBroadcastMessage } from "./broadcast-sender.js";
 import { assertAction } from "./broadcast-state.js";
 
@@ -34,6 +38,7 @@ export function toProgressDto(broadcast: Broadcast): BroadcastProgressDto {
     total: broadcast.total,
     sent: broadcast.sent,
     failed: broadcast.failed,
+    scheduledAt: broadcast.scheduledAt?.toISOString() ?? null,
     startedAt: broadcast.startedAt?.toISOString() ?? null,
     finishedAt: broadcast.finishedAt?.toISOString() ?? null,
   };
@@ -46,6 +51,7 @@ function toBroadcastDto(broadcast: BroadcastWithAuthor): BroadcastDto {
     imageUrl: broadcast.imageUrl,
     buttonText: broadcast.buttonText,
     buttonUrl: broadcast.buttonUrl,
+    segment: parseSegment(broadcast.segment),
     createdAt: broadcast.createdAt.toISOString(),
     author: broadcast.author,
   };
@@ -57,8 +63,20 @@ function content(body: BroadcastContentBody) {
     imageUrl: body.imageUrl ?? null,
     buttonText: body.buttonText ?? null,
     buttonUrl: body.buttonUrl ?? null,
+    // Prisma.DbNull stores SQL NULL (a JSON `null` would be a JSON value).
+    segment: isEmptySegment(body.segment)
+      ? Prisma.DbNull
+      : (body.segment as Prisma.InputJsonObject),
   };
 }
+
+/** A segment without conditions means everyone: store it as NULL. */
+function isEmptySegment(segment: BroadcastSegment | null | undefined): boolean {
+  return !segment || Object.values(segment).every((value) => value === undefined);
+}
+
+const SCHEDULE_MIN_LEAD_MS = 60_000;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Broadcast domain on the API side: drafts, state transitions, previews, progress. */
 @Injectable()
@@ -134,26 +152,53 @@ export class BroadcastsService implements OnApplicationShutdown {
     }
   }
 
-  /** DRAFT → QUEUED, then the worker snapshots recipients and sends. */
+  /** How many users a segment reaches right now (the composer shows it live). */
+  async audience(segment: BroadcastSegment | null): Promise<AudienceDto> {
+    return { count: await this.prisma.user.count({ where: segmentWhere(segment, new Date()) }) };
+  }
+
+  /** DRAFT or SCHEDULED → QUEUED now; the worker snapshots recipients and sends. */
   async start(id: string): Promise<BroadcastProgressDto> {
     const broadcast = await this.find(id);
     assertAction(broadcast.status, "start");
     const { count } = await this.prisma.broadcast.updateMany({
-      where: { id, status: "DRAFT" },
+      where: { id, status: { in: ["DRAFT", "SCHEDULED"] } },
       data: { status: "QUEUED" },
     });
     if (count === 0) assertAction((await this.find(id)).status, "start");
-    await this.controlQueue.add(
-      CONTROL_JOB.start,
-      { broadcastId: id },
-      {
-        jobId: `start-${id}`,
-        attempts: 3,
-        backoff: { type: "exponential", delay: 5_000 },
-        removeOnComplete: true,
-        removeOnFail: 100,
-      },
-    );
+    await enqueueStart(this.controlQueue, id);
+    return this.progress(id);
+  }
+
+  /**
+   * DRAFT or SCHEDULED → SCHEDULED at `scheduledAt` (at least a minute ahead, at
+   * most {@link MAX_SCHEDULE_DAYS} days). The worker starts it when it is due.
+   */
+  async schedule(id: string, scheduledAt: Date): Promise<BroadcastProgressDto> {
+    const now = Date.now();
+    if (scheduledAt.getTime() < now + SCHEDULE_MIN_LEAD_MS) {
+      throw new BadRequestException("scheduledAt must be at least a minute in the future");
+    }
+    if (scheduledAt.getTime() > now + MAX_SCHEDULE_DAYS * DAY_MS) {
+      throw new BadRequestException(`scheduledAt must be within ${MAX_SCHEDULE_DAYS} days`);
+    }
+    assertAction((await this.find(id)).status, "schedule");
+    const { count } = await this.prisma.broadcast.updateMany({
+      where: { id, status: { in: ["DRAFT", "SCHEDULED"] } },
+      data: { status: "SCHEDULED", scheduledAt },
+    });
+    if (count === 0) assertAction((await this.find(id)).status, "schedule");
+    return this.progress(id);
+  }
+
+  /** SCHEDULED → DRAFT, so the content can be edited again. */
+  async unschedule(id: string): Promise<BroadcastProgressDto> {
+    assertAction((await this.find(id)).status, "unschedule");
+    const { count } = await this.prisma.broadcast.updateMany({
+      where: { id, status: "SCHEDULED" },
+      data: { status: "DRAFT", scheduledAt: null },
+    });
+    if (count === 0) assertAction((await this.find(id)).status, "unschedule");
     return this.progress(id);
   }
 
@@ -166,11 +211,11 @@ export class BroadcastsService implements OnApplicationShutdown {
     const broadcast = await this.find(id);
     assertAction(broadcast.status, "cancel");
     const { count } = await this.prisma.broadcast.updateMany({
-      where: { id, status: { in: ["DRAFT", "QUEUED", "RUNNING"] } },
+      where: { id, status: { in: ["DRAFT", "SCHEDULED", "QUEUED", "RUNNING"] } },
       data: { status: "CANCELLED", finishedAt: new Date() },
     });
     if (count === 0) assertAction((await this.find(id)).status, "cancel");
-    if (broadcast.status !== "DRAFT") {
+    if (broadcast.status === "QUEUED" || broadcast.status === "RUNNING") {
       await this.controlQueue.add(
         CONTROL_JOB.purge,
         { broadcastId: id },

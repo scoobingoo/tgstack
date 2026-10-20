@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { type AudienceForm, AudiencePicker, audienceFormFrom, toSegment } from "./audience-picker";
 import { TelegramPreview } from "./telegram-preview";
 
 interface FormState {
@@ -29,12 +30,13 @@ interface FormState {
   buttonUrl: string;
 }
 
-function toBody(form: FormState): BroadcastContentBody {
+function toBody(form: FormState, audience: AudienceForm): BroadcastContentBody {
   return {
     text: form.text,
     imageUrl: form.imageUrl.trim() || null,
     buttonText: form.buttonText.trim() || null,
     buttonUrl: form.buttonUrl.trim() || null,
+    segment: toSegment(audience),
   };
 }
 
@@ -52,6 +54,9 @@ export function BroadcastComposer({ broadcast }: { broadcast?: BroadcastDto }) {
     buttonText: broadcast?.buttonText ?? "",
     buttonUrl: broadcast?.buttonUrl ?? "",
   });
+  const [audience, setAudience] = useState<AudienceForm>(() =>
+    audienceFormFrom(broadcast?.segment),
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const limit = form.imageUrl.trim() ? PHOTO_CAPTION_LIMIT : MESSAGE_TEXT_LIMIT;
@@ -62,7 +67,7 @@ export function BroadcastComposer({ broadcast }: { broadcast?: BroadcastDto }) {
   /** Validates locally with the same schema as the server, then creates or updates the draft. */
   const save = useMutation({
     mutationFn: async () => {
-      const body = toBody(form);
+      const body = toBody(form, audience);
       const parsed = broadcastContentSchema.safeParse(body);
       if (!parsed.success) {
         setErrors(
@@ -99,98 +104,112 @@ export function BroadcastComposer({ broadcast }: { broadcast?: BroadcastDto }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <h2>{t("composer-text")}</h2>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form
-            className="space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              save.mutate(undefined, {
-                onSuccess: () => toast.success(t("saved")),
-                onError: (error) => toast.error(error.message),
-              });
-            }}
-          >
-            <div className="space-y-2">
-              <Label htmlFor="text">{t("composer-text")}</Label>
-              <Textarea
-                id="text"
-                rows={8}
-                value={form.text}
-                onChange={set("text")}
-                className="font-mono text-sm"
-                aria-invalid={Boolean(errors.text)}
-                aria-describedby="text-help"
-              />
-              <div
-                id="text-help"
-                className="flex justify-between gap-2 text-xs text-muted-foreground"
-              >
-                <span>{t("composer-text-help")}</span>
-                <span className={length > limit ? "text-destructive" : undefined}>
-                  {t("composer-characters", { count: length, limit })}
-                </span>
-              </div>
-              {fieldError("text")}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl">{t("composer-image")}</Label>
-              <Input
-                id="imageUrl"
-                type="url"
-                inputMode="url"
-                placeholder="https://"
-                value={form.imageUrl}
-                onChange={set("imageUrl")}
-                aria-invalid={Boolean(errors.imageUrl)}
-              />
-              {fieldError("imageUrl")}
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+      <div className="min-w-0 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h2>{t("composer-text")}</h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              id="broadcast-form"
+              className="space-y-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                save.mutate(undefined, {
+                  onSuccess: () => toast.success(t("saved")),
+                  onError: (error) => toast.error(error.message),
+                });
+              }}
+            >
               <div className="space-y-2">
-                <Label htmlFor="buttonText">{t("composer-button-text")}</Label>
-                <Input id="buttonText" value={form.buttonText} onChange={set("buttonText")} />
-                {fieldError("buttonText")}
+                <Label htmlFor="text">{t("composer-text")}</Label>
+                <Textarea
+                  id="text"
+                  rows={8}
+                  value={form.text}
+                  onChange={set("text")}
+                  className="font-mono text-sm"
+                  aria-invalid={Boolean(errors.text)}
+                  aria-describedby="text-help"
+                />
+                <div
+                  id="text-help"
+                  className="flex justify-between gap-2 text-xs text-muted-foreground"
+                >
+                  <span>{t("composer-text-help")}</span>
+                  <span className={length > limit ? "text-destructive" : undefined}>
+                    {t("composer-characters", { count: length, limit })}
+                  </span>
+                </div>
+                {fieldError("text")}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="buttonUrl">{t("composer-button-url")}</Label>
+                <Label htmlFor="imageUrl">{t("composer-image")}</Label>
                 <Input
-                  id="buttonUrl"
+                  id="imageUrl"
                   type="url"
                   inputMode="url"
                   placeholder="https://"
-                  value={form.buttonUrl}
-                  onChange={set("buttonUrl")}
-                  aria-invalid={Boolean(errors.buttonUrl)}
+                  value={form.imageUrl}
+                  onChange={set("imageUrl")}
+                  aria-invalid={Boolean(errors.imageUrl)}
                 />
-                {fieldError("buttonUrl")}
+                {fieldError("imageUrl")}
               </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button type="submit" disabled={save.isPending}>
-                <SaveIcon aria-hidden />
-                {t("composer-save")}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={preview.isPending || !form.text.trim()}
-                onClick={() => preview.mutate()}
-              >
-                <SendIcon aria-hidden />
-                {t("composer-send-preview")}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="buttonText">{t("composer-button-text")}</Label>
+                  <Input id="buttonText" value={form.buttonText} onChange={set("buttonText")} />
+                  {fieldError("buttonText")}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="buttonUrl">{t("composer-button-url")}</Label>
+                  <Input
+                    id="buttonUrl"
+                    type="url"
+                    inputMode="url"
+                    placeholder="https://"
+                    value={form.buttonUrl}
+                    onChange={set("buttonUrl")}
+                    aria-invalid={Boolean(errors.buttonUrl)}
+                  />
+                  {fieldError("buttonUrl")}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button type="submit" disabled={save.isPending}>
+                  <SaveIcon aria-hidden />
+                  {t("composer-save")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={preview.isPending || !form.text.trim()}
+                  onClick={() => preview.mutate()}
+                >
+                  <SendIcon aria-hidden />
+                  {t("composer-send-preview")}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
 
-      <Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h2>{t("audience-title")}</h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AudiencePicker value={audience} onChange={setAudience} error={errors.segment} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="h-fit">
         <CardHeader>
           <CardTitle>
             <h2>{t("composer-preview")}</h2>
