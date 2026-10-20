@@ -220,3 +220,9 @@ Every non-obvious choice made while building tgstack. Format: **date — decisio
 - **Decision:** the dashboard reads `BOT_USERNAME` at request time (replacing the build-time `NEXT_PUBLIC_BOT_USERNAME`); the server image keeps only packages reachable through `dependencies` (`docker/prune-node-modules.mjs`, ~430 MB → ~70 MB of `node_modules`); release images are built for amd64 and arm64; Mini App builds ignore `NODE_ENV=development` from the root `.env`.
 - **Reason:** one published image must work for every bot and VPS; `pnpm deploy` installs peers such as the Prisma CLI; Vite applied the server's `NODE_ENV` to the Mini App build and shipped React's development bundle (200 kB → 136 kB gzipped once fixed).
 - **Alternatives:** build arguments per deployment, a slimmer base image only.
+
+## D44 — Segments and scheduled broadcasts (Phase 9, 2026-10-22)
+- **Decision:** `Broadcast.segment` (JSON, validated by `broadcastSegmentSchema`: locales, active within / inactive for N days, buyers / non-buyers) and `Broadcast.scheduledAt` with a new `SCHEDULED` status (additive migration `broadcast_schedule_segments`). The segment is evaluated at the first snapshot. The worker sweeps due schedules every 15 s and enqueues the idempotent `start-<id>` job; the snapshot claims `SCHEDULED → QUEUED` atomically.
+- **Reason:** owner-approved Phase 9 scope. Schedules in Postgres survive Redis restarts and need no cleanup on unschedule or cancel; segments evaluated late reach the users who match at send time.
+- **Alternatives:** BullMQ delayed jobs per schedule (precise to the second, but lost with Redis and must be removed and re-added on every change); materialized recipient lists at save time (stale by send time).
+
