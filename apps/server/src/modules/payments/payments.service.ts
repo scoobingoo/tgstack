@@ -7,14 +7,14 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import type { Prisma } from "@tgstack/db";
-import type { ListPaymentsQuery, Paginated, PaymentDto } from "@tgstack/shared";
+import type { ListPaymentsQuery, Paginated, PaymentDto, RefundMode } from "@tgstack/shared";
 import { GrammyError } from "grammy";
 import { PrismaService } from "../../infra/prisma/prisma.service.js";
 import {
   PAYMENT_PROVIDERS,
   type PaymentProvider,
 } from "./interfaces/payment-provider.interface.js";
-import { paymentInclude, toPaymentDto } from "./payments.mapper.js";
+import { type PaymentWithRelations, paymentInclude, toPaymentDto } from "./payments.mapper.js";
 
 /** Resolves providers by name and implements provider-independent operations. */
 @Injectable()
@@ -51,6 +51,15 @@ export class PaymentsService {
     return provider;
   }
 
+  /** How refunds work for a provider; unknown (removed) providers are treated as manual. */
+  refundModeOf(provider: string): RefundMode {
+    return this.providers.get(provider)?.refundMode ?? "manual";
+  }
+
+  toDto(payment: PaymentWithRelations): PaymentDto {
+    return toPaymentDto(payment, this.refundModeOf(payment.provider));
+  }
+
   async list(query: ListPaymentsQuery): Promise<Paginated<PaymentDto>> {
     const where: Prisma.PaymentWhereInput = {
       ...(query.status ? { status: query.status } : {}),
@@ -66,7 +75,12 @@ export class PaymentsService {
       }),
       this.prisma.payment.count({ where }),
     ]);
-    return { items: items.map(toPaymentDto), total, page: query.page, limit: query.limit };
+    return {
+      items: items.map((item) => this.toDto(item)),
+      total,
+      page: query.page,
+      limit: query.limit,
+    };
   }
 
   /** Refunds through the payment's provider, then marks it REFUNDED. */
@@ -91,6 +105,6 @@ export class PaymentsService {
       data: { status: "REFUNDED", refundedAt: new Date() },
       include: paymentInclude,
     });
-    return toPaymentDto(updated);
+    return this.toDto(updated);
   }
 }

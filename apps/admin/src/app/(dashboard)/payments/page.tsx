@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { displayName, formatDateTime, formatNumber } from "@/lib/format";
+import { displayName, formatDateTime, formatMoney } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
 
 const LIMIT = 20;
@@ -70,8 +70,7 @@ export default function PaymentsPage() {
       header: t("col-amount"),
       cell: ({ row }) => (
         <span className="tabular-nums">
-          {formatNumber(row.original.amount, locale)}{" "}
-          {row.original.currency === "XTR" ? "⭐" : row.original.currency}
+          {formatMoney(row.original.amount, row.original.currency, locale)}
         </span>
       ),
     },
@@ -110,11 +109,17 @@ export default function PaymentsPage() {
               </Button>
             }
             title={t("payment-refund-title", {
-              amount: row.original.amount,
+              amount: formatMoney(row.original.amount, row.original.currency, locale),
               name: row.original.user.firstName,
             })}
-            description={t("payment-refund-confirm")}
-            confirmLabel={t("payment-refund")}
+            description={t(
+              row.original.refundMode === "manual"
+                ? "payment-refund-confirm-manual"
+                : "payment-refund-confirm",
+            )}
+            confirmLabel={t(
+              row.original.refundMode === "manual" ? "payment-refund-manual" : "payment-refund",
+            )}
             destructive
             onConfirm={() => refund.mutate(row.original.id)}
           />

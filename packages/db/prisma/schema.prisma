@@ -30,30 +30,39 @@ enum BroadcastStatus {
   FAILED
 }
 
+/// Lifecycle of a gateway checkout (PayOS) before it becomes a `Payment`.
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+  EXPIRED
+}
+
 enum PaymentStatus {
   PAID
   REFUNDED
 }
 
 model User {
-  id           String      @id @default(cuid())
-  telegramId   BigInt      @unique
-  username     String?
-  firstName    String
-  lastName     String?
+  id            String         @id @default(cuid())
+  telegramId    BigInt         @unique
+  username      String?
+  firstName     String
+  lastName      String?
   /// IETF language tag reported by Telegram.
-  languageCode String?
+  languageCode  String?
   /// Locale chosen by the user (bot `/language`, Mini App profile).
-  locale       String      @default("en")
-  role         Role        @default(USER)
+  locale        String         @default("en")
+  role          Role           @default(USER)
   /// The user blocked the bot (Bot API 403) — skipped by broadcasts.
-  isBlocked    Boolean     @default(false)
+  isBlocked     Boolean        @default(false)
   /// EXAMPLE: answers of the onboarding wizard. Safe to drop with the example.
-  onboarding   Json?
-  createdAt    DateTime    @default(now())
-  lastSeenAt   DateTime    @default(now())
-  payments     Payment[]
-  broadcasts   Broadcast[] @relation("BroadcastAuthor")
+  onboarding    Json?
+  createdAt     DateTime       @default(now())
+  lastSeenAt    DateTime       @default(now())
+  payments      Payment[]
+  paymentOrders PaymentOrder[]
+  broadcasts    Broadcast[]    @relation("BroadcastAuthor")
 
   @@index([createdAt])
   @@index([lastSeenAt])
@@ -87,15 +96,18 @@ model Broadcast {
 
 /// EXAMPLE: shop products sold for Telegram Stars.
 model Product {
-  id          String    @id @default(cuid())
-  title       String
-  description String
+  id            String         @id @default(cuid())
+  title         String
+  description   String
   /// Price in Telegram Stars (currency XTR).
-  priceStars  Int
-  imageUrl    String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  payments    Payment[]
+  priceStars    Int
+  /// Optional price in Vietnamese đồng for bank transfer (PayOS / VietQR).
+  priceVnd      Int?
+  imageUrl      String?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  payments      Payment[]
+  paymentOrders PaymentOrder[]
 }
 
 model Payment {
@@ -117,4 +129,32 @@ model Payment {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+/// A checkout at an external gateway (PayOS / VietQR bank transfer). It becomes a
+/// `Payment` when the gateway's webhook reports it paid.
+model PaymentOrder {
+  id          String             @id @default(cuid())
+  /// The gateway's order number (PayOS `orderCode`).
+  orderCode   Int                @unique
+  /// Payment provider name, e.g. "payos".
+  provider    String
+  userId      String
+  user        User               @relation(fields: [userId], references: [id])
+  productId   String?
+  product     Product?           @relation(fields: [productId], references: [id])
+  /// Amount in the currency's unit (whole đồng for VND).
+  amount      Int
+  currency    String
+  status      PaymentOrderStatus @default(PENDING)
+  /// Hosted checkout page with the VietQR code.
+  checkoutUrl String
+  /// The gateway's own ID (PayOS `paymentLinkId`).
+  externalId  String?
+  expiresAt   DateTime
+  createdAt   DateTime           @default(now())
+  paidAt      DateTime?
+
+  @@index([userId])
+  @@index([status, expiresAt])
 }

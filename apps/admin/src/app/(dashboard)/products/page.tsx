@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-import { formatDate, formatNumber } from "@/lib/format";
+import { formatDate, formatMoney } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
 
 const LIMIT = 20;
@@ -33,6 +33,7 @@ interface FormState {
   title: string;
   description: string;
   priceStars: string;
+  priceVnd: string;
   imageUrl: string;
   isActive: boolean;
 }
@@ -41,6 +42,7 @@ const emptyForm: FormState = {
   title: "",
   description: "",
   priceStars: "",
+  priceVnd: "",
   imageUrl: "",
   isActive: true,
 };
@@ -70,6 +72,7 @@ function ProductDialog({
             title: product.title,
             description: product.description,
             priceStars: String(product.priceStars),
+            priceVnd: product.priceVnd ? String(product.priceVnd) : "",
             imageUrl: product.imageUrl ?? "",
             isActive: product.isActive,
           }
@@ -83,6 +86,7 @@ function ProductDialog({
         title: form.title,
         description: form.description,
         priceStars: Number(form.priceStars),
+        priceVnd: form.priceVnd.trim() ? Number(form.priceVnd) : null,
         imageUrl: form.imageUrl.trim() || null,
         isActive: form.isActive,
       };
@@ -161,6 +165,20 @@ function ProductDialog({
             />,
           )}
           {field(
+            "priceVnd",
+            t("field-price-vnd"),
+            <Input
+              id="priceVnd"
+              type="number"
+              min={1000}
+              step={1000}
+              inputMode="numeric"
+              placeholder={t("field-price-vnd-placeholder")}
+              value={form.priceVnd}
+              onChange={(e) => setForm({ ...form, priceVnd: e.target.value })}
+            />,
+          )}
+          {field(
             "imageUrl",
             t("field-image"),
             <Input
@@ -229,7 +247,13 @@ export default function ProductsPage() {
     {
       id: "price",
       header: t("col-price"),
-      cell: ({ row }) => `${formatNumber(row.original.priceStars, locale)} ⭐`,
+      cell: ({ row }) =>
+        [
+          formatMoney(row.original.priceStars, "XTR", locale),
+          row.original.priceVnd ? formatMoney(row.original.priceVnd, "VND", locale) : null,
+        ]
+          .filter(Boolean)
+          .join(" · "),
     },
     {
       id: "active",

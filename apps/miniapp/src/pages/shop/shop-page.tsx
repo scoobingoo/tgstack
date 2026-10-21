@@ -1,15 +1,79 @@
-// EXAMPLE: shop — product list → product → pay with Telegram Stars.
+// EXAMPLE: shop — product list → product → pay with Telegram Stars or by bank transfer (PayOS).
 // Delete this folder and its tab in src/app/App.tsx to remove it (docs/examples.md).
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { ProductDto } from "@tgstack/shared";
-import { invoice } from "@tma.js/sdk-react";
-import { ChevronRightIcon, StarIcon } from "lucide-react";
+import type { CheckoutDto, ProductDto } from "@tgstack/shared";
+import { invoice, openLink } from "@tma.js/sdk-react";
+import { ChevronRightIcon, ExternalLinkIcon, LandmarkIcon, StarIcon } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "../../app/app-context";
 import { ErrorView, Section, Spinner, Toast } from "../../components/ui";
 import { useBackButton, useMainButton } from "../../hooks/use-telegram-buttons";
 
 type InvoiceOutcome = "paid" | "cancelled" | "failed" | "pending";
+
+const formatVnd = (amount: number) => `${new Intl.NumberFormat("vi-VN").format(amount)} ₫`;
+
+/**
+ * Bank transfer through PayOS: create the order, then open its checkout page (a
+ * VietQR code) on a second tap — Telegram only opens links from a user gesture.
+ * The order is polled until the PayOS webhook marks it paid.
+ */
+function BankTransfer({ product }: { product: ProductDto & { priceVnd: number } }) {
+  const { api, t } = useApp();
+  const [order, setOrder] = useState<CheckoutDto | null>(null);
+  const create = useMutation({
+    mutationFn: () => api.checkout(product.id),
+    onSuccess: setOrder,
+  });
+  const status = useQuery({
+    queryKey: ["payment-order", order?.orderCode],
+    queryFn: () => api.paymentOrder(order?.orderCode ?? 0),
+    enabled: order !== null,
+    refetchInterval: (query) =>
+      query.state.data?.status === "PENDING" || !query.state.data ? 3_000 : false,
+  });
+  const state = status.data?.status;
+
+  return (
+    <Section>
+      <div className="space-y-3 px-4 py-3">
+        <p className="flex items-center gap-2 font-medium">
+          <LandmarkIcon className="size-4 text-tg-accent" aria-hidden />
+          {t("bank-title", { price: formatVnd(product.priceVnd) })}
+        </p>
+        {!order ? (
+          <button
+            type="button"
+            disabled={create.isPending}
+            onClick={() => create.mutate()}
+            className="w-full rounded-lg bg-tg-secondary px-4 py-2 font-medium text-tg-link disabled:opacity-60"
+          >
+            {create.isPending ? t("loading") : t("bank-start")}
+          </button>
+        ) : state === "PAID" ? (
+          <Toast tone="info">{t("bank-paid")}</Toast>
+        ) : state === "EXPIRED" || state === "CANCELLED" ? (
+          <Toast tone="error">{t("bank-expired")}</Toast>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => openLink(order.url)}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-tg-button px-4 py-2 font-medium text-tg-button-text"
+            >
+              {t("bank-open")}
+              <ExternalLinkIcon className="size-4" aria-hidden />
+            </button>
+            <p className="text-sm text-tg-hint" aria-live="polite">
+              {t("bank-waiting")}
+            </p>
+          </>
+        )}
+        {create.isError ? <Toast tone="error">{t("bank-error")}</Toast> : null}
+      </div>
+    </Section>
+  );
+}
 
 function ProductView({ product, onBack }: { product: ProductDto; onBack: () => void }) {
   const { api, t } = useApp();
@@ -51,6 +115,9 @@ function ProductView({ product, onBack }: { product: ProductDto; onBack: () => v
       <Section>
         <p className="px-4 py-3">{product.description}</p>
       </Section>
+      {product.priceVnd ? (
+        <BankTransfer product={{ ...product, priceVnd: product.priceVnd }} />
+      ) : null}
       {outcome ? (
         <Toast tone={outcome === "failed" ? "error" : "info"}>{t(`invoice-${outcome}`)}</Toast>
       ) : null}

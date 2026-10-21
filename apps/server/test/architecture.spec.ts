@@ -141,6 +141,8 @@ describe("HTTP namespaces", () => {
     const publicControllers = new Set([
       "modules/auth/auth.controller.ts",
       "infra/health/health.controller.ts",
+      // Public like the Telegram webhook; authenticated by the HMAC signature of the body.
+      "modules/payments/payos-webhook.controller.ts",
     ]);
     const unguarded = server
       .filter((file) => file.endsWith(".controller.ts") && !publicControllers.has(rel(file)))

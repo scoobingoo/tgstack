@@ -7,6 +7,8 @@ export const productSchema = z.object({
   title: z.string(),
   description: z.string(),
   priceStars: z.number().int().positive(),
+  /** Price in đồng for bank transfer (PayOS); null when not sold for VND or PayOS is off. */
+  priceVnd: z.number().int().positive().nullable(),
   imageUrl: z.string().nullable(),
   isActive: z.boolean(),
   createdAt: isoDateSchema,
@@ -24,6 +26,7 @@ export const createProductSchema = z.object({
   title,
   description,
   priceStars: z.number().int().min(1).max(100_000),
+  priceVnd: z.number().int().min(1_000).max(500_000_000).nullable().optional(),
   imageUrl: z
     .url({ protocol: /^https?$/ })
     .nullable()

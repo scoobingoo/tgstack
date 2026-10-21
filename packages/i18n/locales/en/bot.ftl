@@ -42,6 +42,8 @@ admin-link-button = Open the dashboard
 
 payment-thanks = 🎉 Thank you! We received { $amount } ⭐ for “{ $title }”.
 payment-thanks-generic = 🎉 Thank you! We received { $amount } ⭐.
+payment-thanks-vnd = 🎉 Thank you! We received your bank transfer of { $amount } ₫ for “{ $title }”.
+payment-thanks-vnd-generic = 🎉 Thank you! We received your bank transfer of { $amount } ₫.
 payment-error-invalid = This invoice is no longer valid. Please start again.
 payment-error-unavailable = Sorry, this product is no longer available.
 payment-error-price-changed = The price has changed. Please open the product again.

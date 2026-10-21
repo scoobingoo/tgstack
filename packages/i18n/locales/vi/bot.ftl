@@ -42,6 +42,8 @@ admin-link-button = Mở trang quản trị
 
 payment-thanks = 🎉 Cảm ơn bạn! Chúng mình đã nhận { $amount } ⭐ cho “{ $title }”.
 payment-thanks-generic = 🎉 Cảm ơn bạn! Chúng mình đã nhận { $amount } ⭐.
+payment-thanks-vnd = 🎉 Cảm ơn bạn! Chúng tôi đã nhận được khoản chuyển khoản { $amount } ₫ cho “{ $title }”.
+payment-thanks-vnd-generic = 🎉 Cảm ơn bạn! Chúng tôi đã nhận được khoản chuyển khoản { $amount } ₫.
 payment-error-invalid = Hoá đơn này không còn hợp lệ. Vui lòng thử lại từ đầu.
 payment-error-unavailable = Rất tiếc, sản phẩm này không còn bán nữa.
 payment-error-price-changed = Giá đã thay đổi. Vui lòng mở lại sản phẩm.

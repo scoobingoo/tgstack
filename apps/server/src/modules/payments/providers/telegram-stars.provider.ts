@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import type { Payment, User } from "@tgstack/db";
 import { InjectBot } from "@tgstack/nestjs-grammy";
 import type { Bot } from "grammy";
@@ -28,6 +28,7 @@ const XTR = "XTR";
 export class TelegramStarsProvider implements PaymentProvider {
   readonly name = TELEGRAM_STARS;
   readonly currency = XTR;
+  readonly refundMode = "automatic" as const;
   private readonly logger = new Logger("TelegramStars");
   private readonly signer: InvoicePayloadSigner;
 
@@ -43,6 +44,9 @@ export class TelegramStarsProvider implements PaymentProvider {
     { user, item }: InvoiceRequest,
     target: InvoiceTarget,
   ): Promise<CreatedInvoice> {
+    if (target.type === "checkout") {
+      throw new BadRequestException("Telegram Stars invoices are links or chat messages");
+    }
     const payload = this.signer.sign({ productId: item.productId, userId: user.id });
     const prices = [{ label: item.title, amount: item.amount }];
     const photo = item.photoUrl ? { photo_url: item.photoUrl } : {};
