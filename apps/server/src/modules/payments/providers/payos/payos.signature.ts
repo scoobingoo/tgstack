@@ -1,4 +1,4 @@
-import { createHmac, // simple compare before timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 /**
  * PayOS signatures (https://payos.vn/docs/tich-hop-webhook/kiem-tra-du-lieu-voi-signature/):
