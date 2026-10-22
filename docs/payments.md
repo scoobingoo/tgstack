@@ -37,24 +37,70 @@ Automated tests mock the Bot API. To see the real thing:
 
 Check, in order: the invoice opens; the bot logs `Payment … 1 XTR from …`; the payment shows up under Payments; a refund flips it to *Refunded*.
 
-## Adding a provider (VietQR, PayOS, …)
+## Bank transfers in Vietnam (PayOS / VietQR)
+
+[PayOS](https://payos.vn) turns a bank transfer into a checkout: it shows a **VietQR** code that any Vietnamese banking app can scan, and calls a webhook when the money arrives. tgstack ships it as the second provider (`modules/payments/providers/payos/`), off until you set its credentials.
+
+> Telegram requires **Stars** for digital goods and services sold inside Telegram. Use bank transfers for what that rule does not cover, such as physical goods, services delivered outside Telegram and donations, and check Telegram's terms for your case.
+
+### Flow
+
+```
+Mini App "Pay by bank transfer" ──▶ POST /api/app/products/:id/checkout
+                                     PaymentOrder (PENDING) + PayOS payment link (signed)
+"Open the payment page" ──openLink──▶ pay.payos.vn: VietQR code, buyer pays in the banking app
+                                     PayOS ──▶ POST /api/webhooks/payos (HMAC-SHA256 signature)
+                                     PaymentOrder PAID + Payment (provider "payos", VND), once
+bot: "Thank you! We received … ₫" ◀─── PayOS redirects the browser back to the bot's chat
+Mini App polls GET /api/app/payment-orders/:orderCode ──▶ PAID
+```
+
+- **Orders.** `PaymentOrder` tracks the checkout before it is paid: a random `orderCode` (PayOS order number), amount, buyer, product, status `PENDING → PAID` (or `EXPIRED` after `PAYOS_ORDER_TTL_MINUTES`, default 15, or `CANCELLED` when PayOS refused the link). The transfer description is `TG<order in base 36>`, within PayOS' 9-character limit for unlinked bank accounts.
+- **Webhook.** `POST /api/webhooks/payos` is public, like the Telegram webhook, and authenticated by the signature of its `data` (sorted `key=value` pairs, HMAC-SHA256 with the checksum key, constant-time comparison). Invalid signatures get `400`. A correctly signed call for an unknown order, such as the sample PayOS sends when you register the URL, or with a different amount, gets `200 { result: "ignored" }` and changes nothing. Repeated deliveries record the payment once (`Payment.telegramPaymentChargeId` is `payos:<orderCode>`; the column name predates other providers). A transfer that arrives after the order expired is still recorded, because the money arrived.
+- **Refunds.** PayOS has no refund API. Payments from providers with `refundMode: "manual"` show **Mark as refunded** in the dashboard: transfer the money back from your bank first, then mark it. Nothing is sent to PayOS.
+- **Revenue.** The dashboard shows bank-transfer revenue (VND) next to Stars.
+- **Prices.** Products get an optional `priceVnd`. The Mini App offers a bank transfer only for products that have one, and only while PayOS is configured.
+
+### Setup
+
+1. Create a payment channel on [my.payos.vn](https://my.payos.vn) and link your bank account.
+2. Copy the channel's **Client ID**, **API Key** and **Checksum Key** to `.env`: `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY` (all three, or none).
+3. Set the webhook URL of the channel to `https://<your domain>/api/webhooks/payos`, in the PayOS dashboard or with the API (PayOS sends a signed test payload; tgstack answers `200`):
+
+   ```bash
+   curl -X POST https://api-merchant.payos.vn/confirm-webhook \
+     -H "x-client-id: $PAYOS_CLIENT_ID" -H "x-api-key: $PAYOS_API_KEY" \
+     -H "content-type: application/json" \
+     -d '{"webhookUrl":"https://your.domain/api/webhooks/payos"}'
+   ```
+
+4. Give a product a price in đồng in the dashboard (Products → edit).
+
+Optional: `PAYOS_RETURN_URL` (where the browser goes after paying or cancelling; default `https://t.me/<your bot>`), `PAYOS_ORDER_TTL_MINUTES`.
+
+### Testing it
+
+PayOS has **no sandbox**: its docs recommend testing in production with small amounts. The automated tests (`apps/server/test/payos.e2e.spec.ts`) run against a local stand-in for the PayOS API (`PAYOS_API_URL`) and check the signature algorithm against the example in the PayOS docs. By hand: price a product at a few thousand đồng, pay it from your own account, and check that the Mini App switches to "received", the bot thanks you and the payment appears under Payments.
+
+## Adding a provider
 
 1. Implement `PaymentProvider` (`apps/server/src/modules/payments/interfaces/payment-provider.interface.ts`):
 
    ```ts
    @Injectable()
-   export class PayOsProvider implements PaymentProvider {
-     readonly name = "payos";
-     readonly currency = "VND";
-     createInvoice(request, target) { /* create a checkout link with the gateway */ }
-     handlePreCheckout(request) { /* only for Telegram-native invoices; otherwise return { ok: true } */ }
+   export class MyGatewayProvider implements PaymentProvider {
+     readonly name = "my-gateway";
+     readonly currency = "USD";
+     readonly refundMode = "automatic"; // or "manual" when the gateway has no refund API
+     createInvoice(request, target) { /* target.type "checkout": create a hosted checkout */ }
+     handlePreCheckout(request) { /* only for Telegram-native invoices */ }
      handleSuccess(request) { /* called from your webhook; insert idempotently by the gateway's charge id */ }
      refund(payment) { /* call the gateway's refund API */ }
    }
    ```
 
-2. Put it in `modules/payments/providers/` and register it in `PaymentsModule`: add the class to `providers` and to the `inject` list of `PAYMENT_PROVIDERS`.
-3. Expose the gateway's webhook (a normal controller) that verifies the gateway's signature and calls `handleSuccess`.
+2. Put it in `modules/payments/providers/` and register it in `PaymentsModule`: add the class to `providers` and to the `PAYMENT_PROVIDERS` factory.
+3. Expose the gateway's webhook under `/api/webhooks/<gateway>` (see `payos-webhook.controller.ts`): verify the gateway's signature before anything else, then call `handleSuccess`. PayOS is the complete example.
 4. `PaymentsService.getProvider(name)` and the admin refund endpoint work unchanged: refunds are routed by `Payment.provider`.
 
 The test `PaymentProvider registry` in `apps/server/test/payments.e2e.spec.ts` shows a second (fake) provider wired next to Telegram Stars.
