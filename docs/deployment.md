@@ -22,7 +22,7 @@ One domain means no CORS, first-party cookies for the dashboard, and an HTTPS Mi
 ## First deployment
 
 ```bash
-git clone https://github.com/<you>/tgstack.git && cd tgstack
+git clone https://github.com/scoobingoo/telegram-miniapp-bot-starter.git && cd telegram-miniapp-bot-starter
 cp .env.example .env
 ```
 
@@ -78,10 +78,10 @@ New migrations run before the new server starts. The API is down for the few sec
 
 ## Prebuilt images (GHCR)
 
-Pushing a tag `v*` runs `.github/workflows/release.yml`, which publishes `ghcr.io/<owner>/tgstack-{server,migrate,admin,miniapp}`. To deploy them instead of building on the server, add to `.env`:
+Pushing a tag `v*` runs `.github/workflows/release.yml`, which publishes `ghcr.io/scoobingoo/tgstack-{server,migrate,admin,miniapp}`. To deploy them instead of building on the server, add to `.env`:
 
 ```dotenv
-TGSTACK_IMAGE=ghcr.io/<owner>/tgstack
+TGSTACK_IMAGE=ghcr.io/scoobingoo/tgstack
 TGSTACK_TAG=1.0.0
 ```
 
