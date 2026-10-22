@@ -50,6 +50,7 @@ export class ProductsService {
         title: body.title,
         description: body.description,
         priceStars: body.priceStars,
+        priceVnd: body.priceVnd ?? null,
         imageUrl: body.imageUrl ?? null,
         isActive: body.isActive ?? true,
       },

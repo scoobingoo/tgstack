@@ -28,3 +28,10 @@ export function displayName(user: {
   const name = [user.firstName, user.lastName].filter(Boolean).join(" ");
   return user.username ? `${name} (@${user.username})` : name;
 }
+
+/** "120 ⭐" for Telegram Stars, "50.000 ₫" for VND, "12 EUR" otherwise. */
+export function formatMoney(amount: number, currency: string, locale: Locale): string {
+  if (currency === "XTR") return `${formatNumber(amount, locale)} ⭐`;
+  if (currency === "VND") return `${formatNumber(amount, locale)} ₫`;
+  return `${formatNumber(amount, locale)} ${currency}`;
+}

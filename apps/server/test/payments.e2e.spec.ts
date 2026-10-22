@@ -231,6 +231,7 @@ describe("PaymentProvider registry", () => {
   class FakeBankProvider implements PaymentProvider {
     readonly name = "fake-bank";
     readonly currency = "VND";
+    readonly refundMode = "manual" as const;
     readonly refunded: string[] = [];
     async createInvoice(): Promise<CreatedInvoice> {
       return { type: "link", url: "https://bank.example/pay/1" };

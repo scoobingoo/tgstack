@@ -15,8 +15,8 @@ export class StatsService {
     const days = (n: number) => new Date(today.getTime() - n * DAY_MS);
     const seriesStart = days(SERIES_DAYS - 1);
 
-    const [totalUsers, newToday, new7, new30, active7, blocked, revenue, daily] = await Promise.all(
-      [
+    const [totalUsers, newToday, new7, new30, active7, blocked, revenue, revenueVnd, daily] =
+      await Promise.all([
         this.prisma.user.count(),
         this.prisma.user.count({ where: { createdAt: { gte: today } } }),
         this.prisma.user.count({ where: { createdAt: { gte: days(6) } } }),
@@ -29,13 +29,16 @@ export class StatsService {
           _sum: { amount: true },
           where: { status: "PAID", currency: "XTR" },
         }),
+        this.prisma.payment.aggregate({
+          _sum: { amount: true },
+          where: { status: "PAID", currency: "VND" },
+        }),
         this.prisma.$queryRaw<{ day: string; count: number }[]>`
         SELECT to_char(date_trunc('day', "createdAt"), 'YYYY-MM-DD') AS day, count(*)::int AS count
         FROM "User"
         WHERE "createdAt" >= ${seriesStart}
         GROUP BY 1`,
-      ],
-    );
+      ]);
 
     const counts = new Map(daily.map((row) => [row.day, row.count]));
     const dailyNewUsers = Array.from({ length: SERIES_DAYS }, (_, i) => {
@@ -49,6 +52,7 @@ export class StatsService {
       activeUsers7d: active7,
       blockedUsers: blocked,
       revenueStars: revenue._sum.amount ?? 0,
+      revenueVnd: revenueVnd._sum.amount ?? 0,
       dailyNewUsers,
     };
   }

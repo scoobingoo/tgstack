@@ -4,9 +4,9 @@ Anything that is out of scope for v1.0 (see `PLAN.md` § 1 and § 4 Phase 9) or 
 
 ## Post-v1 (from PLAN.md Phase 9 — do not start without approval)
 Scheduled broadcasts and user segments shipped on 2026-10-22 (D44). Follow-ups: segments by product bought, saved segments, recurring broadcasts.
+PayOS (VietQR bank transfers) shipped on 2026-10-22 (D45). Follow-ups: show the VietQR code inside the Mini App (`qrCode` from PayOS) instead of the hosted page; cancel the PayOS link when the buyer gives up.
 
 - `npx create-tgstack` CLI to pick modules (admin, miniapp, payments, i18n).
-- VietQR / PayOS payment providers (the `PaymentProvider` interface is designed for them).
 - Analytics: retention cohorts, funnel for the Mini App.
 - AI assistant module (LLM replies + tools).
 - Multi-bot support.

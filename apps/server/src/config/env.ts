@@ -52,8 +52,26 @@ export const envSchema = z
     MINIAPP_URL: z.url().default("http://localhost:5173"),
     INITDATA_MAX_AGE_SECONDS: z.coerce.number().int().positive().default(86_400),
     BROADCAST_RATE_PER_SECOND: z.coerce.number().int().min(1).max(30).default(25),
+
+    /** PayOS (VietQR bank transfers). Set all three to enable it; see docs/payments.md. */
+    PAYOS_CLIENT_ID: z.string().optional(),
+    PAYOS_API_KEY: z.string().optional(),
+    PAYOS_CHECKSUM_KEY: z.string().optional(),
+    PAYOS_API_URL: z.url().default("https://api-merchant.payos.vn"),
+    /** Where PayOS sends the buyer after paying or cancelling; defaults to the bot's chat. */
+    PAYOS_RETURN_URL: z.url().optional(),
+    /** How long a checkout stays payable. */
+    PAYOS_ORDER_TTL_MINUTES: z.coerce.number().int().min(5).max(1440).default(15),
   })
   .superRefine((env, ctx) => {
+    const payos = [env.PAYOS_CLIENT_ID, env.PAYOS_API_KEY, env.PAYOS_CHECKSUM_KEY];
+    if (payos.some(Boolean) && !payos.every(Boolean)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["PAYOS_CLIENT_ID"],
+        message: "set PAYOS_CLIENT_ID, PAYOS_API_KEY and PAYOS_CHECKSUM_KEY together (or none)",
+      });
+    }
     if (env.BOT_MODE !== "webhook") return;
     if (!env.BOT_WEBHOOK_SECRET) {
       ctx.addIssue({

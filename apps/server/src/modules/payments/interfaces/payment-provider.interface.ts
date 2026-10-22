@@ -1,4 +1,5 @@
 import type { Payment, User } from "@tgstack/db";
+import type { RefundMode } from "@tgstack/shared";
 
 /** What is being sold. Providers turn it into an invoice. */
 export interface InvoiceItem {
@@ -20,9 +21,22 @@ export type InvoiceTarget =
   /** A link the Mini App opens with `openInvoice()` (`createInvoiceLink`). */
   | { type: "link" }
   /** An invoice message sent to a chat (`sendInvoice`). */
-  | { type: "chat"; chatId: number };
+  | { type: "chat"; chatId: number }
+  /** A hosted checkout page of an external gateway (PayOS), opened with `openLink()`. */
+  | { type: "checkout" };
 
-export type CreatedInvoice = { type: "link"; url: string } | { type: "chat"; messageId: number };
+export type CreatedInvoice =
+  | { type: "link"; url: string }
+  | { type: "chat"; messageId: number }
+  | {
+      type: "checkout";
+      url: string;
+      /** The gateway order, tracked in `PaymentOrder` until its webhook confirms payment. */
+      orderCode: number;
+      amount: number;
+      currency: string;
+      expiresAt: Date;
+    };
 
 /** A checkout that is about to be charged (Telegram `pre_checkout_query`). */
 export interface PreCheckoutRequest {
@@ -55,7 +69,7 @@ export interface RecordedPayment {
 }
 
 /**
- * A payment method. Implement it to add a gateway (VietQR, PayOS, …) and register
+ * A payment method. Implement it to add a gateway (PayOS is one) and register
  * the class in `PaymentsModule` — see docs/payments.md.
  */
 export interface PaymentProvider {
@@ -63,6 +77,8 @@ export interface PaymentProvider {
   readonly name: string;
   /** ISO 4217 code, or `"XTR"` for Telegram Stars. */
   readonly currency: string;
+  /** `manual` when the gateway has no refund API: `refund()` only lets the payment be marked. */
+  readonly refundMode: RefundMode;
 
   createInvoice(request: InvoiceRequest, target: InvoiceTarget): Promise<CreatedInvoice>;
   /** Accept or reject a checkout. Must answer fast: Telegram waits about 10 seconds. */

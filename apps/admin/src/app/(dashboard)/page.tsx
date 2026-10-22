@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
-import { displayName, formatDateTime, formatNumber } from "@/lib/format";
+import { displayName, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
 
 function StatCard({ label, value }: { label: string; value: string | undefined }) {
@@ -95,6 +95,10 @@ export default function DashboardPage() {
         <StatCard label={t("stat-new-today")} value={n(s?.newUsers.today)} />
         <StatCard label={t("stat-new-30d")} value={n(s?.newUsers.last30Days)} />
         <StatCard label={t("stat-blocked")} value={n(s?.blockedUsers)} />
+        <StatCard
+          label={t("stat-revenue-vnd")}
+          value={s ? formatMoney(s.revenueVnd, "VND", locale) : undefined}
+        />
       </section>
 
       <Card>

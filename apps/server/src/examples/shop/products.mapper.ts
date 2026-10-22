@@ -8,6 +8,7 @@ export function toProductDto(product: Product): ProductDto {
     title: product.title,
     description: product.description,
     priceStars: product.priceStars,
+    priceVnd: product.priceVnd,
     imageUrl: product.imageUrl,
     isActive: product.isActive,
     createdAt: product.createdAt.toISOString(),

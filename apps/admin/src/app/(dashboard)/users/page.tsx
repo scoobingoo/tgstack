@@ -28,7 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { api } from "@/lib/api";
-import { displayName, formatDate, formatDateTime, formatNumber } from "@/lib/format";
+import { displayName, formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
 
 const LIMIT = 20;
@@ -120,7 +120,9 @@ function UserDrawer({ userId, onClose }: { userId: string | null; onClose: () =>
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="tabular-nums">{payment.amount} ⭐</span>
+                        <span className="tabular-nums">
+                          {formatMoney(payment.amount, payment.currency, locale)}
+                        </span>
                         <PaymentStatusBadge status={payment.status} />
                       </div>
                     </li>

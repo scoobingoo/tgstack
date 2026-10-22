@@ -22,7 +22,7 @@ export function migrateDatabase(databaseUrl: string): void {
 /** Deletes every row of every table. Call it in `beforeEach` of integration tests. */
 export async function resetDatabase(prisma: PrismaClient): Promise<void> {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE "Payment", "Broadcast", "Product", "User" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "Payment", "PaymentOrder", "Broadcast", "Product", "User" RESTART IDENTITY CASCADE',
   );
 }
 

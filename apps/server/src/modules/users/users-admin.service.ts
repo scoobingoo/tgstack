@@ -8,14 +8,18 @@ import type {
   UserDto,
 } from "@tgstack/shared";
 import { PrismaService } from "../../infra/prisma/prisma.service.js";
-import { paymentInclude, toPaymentDto } from "../payments/payments.mapper.js";
+import { paymentInclude } from "../payments/payments.mapper.js";
+import { PaymentsService } from "../payments/payments.service.js";
 import { toUserDto } from "./users.mapper.js";
 
 const RECENT_PAYMENTS = 20;
 
 @Injectable()
 export class UsersAdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly payments: PaymentsService,
+  ) {}
 
   async list(query: ListUsersQuery): Promise<Paginated<UserDto>> {
     const where = this.buildWhere(query);
@@ -50,7 +54,7 @@ export class UsersAdminService {
     return {
       ...toUserDto(user),
       onboarding: user.onboarding,
-      payments: payments.map(toPaymentDto),
+      payments: payments.map((payment) => this.payments.toDto(payment)),
       paymentsCount,
       totalSpentStars: spent._sum.amount ?? 0,
     };

@@ -226,3 +226,8 @@ Every non-obvious choice made while building tgstack. Format: **date — decisio
 - **Reason:** owner-approved Phase 9 scope. Schedules in Postgres survive Redis restarts and need no cleanup on unschedule or cancel; segments evaluated late reach the users who match at send time.
 - **Alternatives:** BullMQ delayed jobs per schedule (precise to the second, but lost with Redis and must be removed and re-added on every change); materialized recipient lists at save time (stale by send time).
 
+## D45 — PayOS as the second payment provider (Phase 9, 2026-10-22)
+- **Decision:** `PayOsProvider` (`modules/payments/providers/payos/`) implements `PaymentProvider` for VND bank transfers through PayOS hosted checkouts (VietQR). New `PaymentOrder` table and `Product.priceVnd` (additive migration `payos_payment_orders`). The webhook lives at `/api/webhooks/payos`, a namespace authenticated by request signatures. The interface gained `refundMode` (`manual` for PayOS, which has no refund API) and a `checkout` invoice target. PayOS is registered only when its three credentials are set.
+- **Reason:** owner-approved Phase 9 scope. PayOS is a gateway that confirms payments (webhook) and produces standard VietQR codes; a bare VietQR string cannot confirm anything. Facts verified on payos.vn/docs on 2026-10-22: signature algorithm, 9-character description limit, no sandbox, no refund endpoint.
+- **Alternatives:** the official `@payos/node` SDK (one more dependency for three HTTP calls and an HMAC), static VietQR codes with manual reconciliation (no confirmation), reusing `Payment` with a PENDING status (would mix unpaid checkouts into payment lists and revenue).
+

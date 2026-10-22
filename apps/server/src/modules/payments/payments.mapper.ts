@@ -1,5 +1,5 @@
 import type { Payment, Product, User } from "@tgstack/db";
-import type { PaymentDto } from "@tgstack/shared";
+import type { PaymentDto, RefundMode } from "@tgstack/shared";
 
 export type PaymentWithRelations = Payment & {
   user: Pick<User, "id" | "telegramId" | "username" | "firstName">;
@@ -13,13 +13,15 @@ export const paymentInclude = {
 } as const;
 
 /** Prisma → JSON mapper; the BigInt Telegram ID becomes a string (decision D6). */
-export function toPaymentDto(payment: PaymentWithRelations): PaymentDto {
+/** `refundMode` comes from the payment's provider (`PaymentsService.refundModeOf`). */
+export function toPaymentDto(payment: PaymentWithRelations, refundMode: RefundMode): PaymentDto {
   return {
     id: payment.id,
     amount: payment.amount,
     currency: payment.currency,
     provider: payment.provider,
     status: payment.status,
+    refundMode,
     telegramPaymentChargeId: payment.telegramPaymentChargeId,
     createdAt: payment.createdAt.toISOString(),
     refundedAt: payment.refundedAt?.toISOString() ?? null,

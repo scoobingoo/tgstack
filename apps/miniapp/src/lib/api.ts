@@ -1,7 +1,9 @@
 import {
   appMeSchema,
+  checkoutSchema,
   invoiceLinkSchema,
   MINI_APP_AUTH_SCHEME,
+  paymentOrderSchema,
   productSchema,
   type UpdateAppMeBody,
   updateAppMeSchema,
@@ -56,6 +58,11 @@ export function createApiClient(getInitData: () => string, fetchImpl: typeof fet
     products: () => request("/products", z.array(productSchema)),
     createInvoice: (productId: string) =>
       request(`/products/${productId}/invoice`, invoiceLinkSchema, { method: "POST" }),
+    /** Bank transfer (PayOS / VietQR): a hosted checkout page and its order number. */
+    checkout: (productId: string) =>
+      request(`/products/${productId}/checkout`, checkoutSchema, { method: "POST" }),
+    paymentOrder: (orderCode: number) =>
+      request(`/payment-orders/${orderCode}`, paymentOrderSchema),
   };
 }
 
