@@ -3,6 +3,16 @@
   "version": "0.0.0",
   "description": "NestJS module for grammY: decorators, DI, guards, interceptors and filters for Telegram bots.",
   "license": "MIT",
+  "author": "Son Le <sonlocle36123@gmail.com> (https://github.com/scoobingoo)",
+  "homepage": "https://github.com/scoobingoo/telegram-miniapp-bot-starter/tree/main/packages/nestjs-grammy#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scoobingoo/telegram-miniapp-bot-starter.git",
+    "directory": "packages/nestjs-grammy"
+  },
+  "bugs": {
+    "url": "https://github.com/scoobingoo/telegram-miniapp-bot-starter/issues"
+  },
   "type": "module",
   "keywords": [
     "nestjs",

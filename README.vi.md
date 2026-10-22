@@ -2,12 +2,15 @@
 
 **Bộ khởi đầu Telegram full-stack, sẵn sàng cho production.** Bot NestJS + grammY, Telegram Mini App, trang quản trị, gửi tin hàng loạt có giới hạn tốc độ và thanh toán Telegram Stars: một monorepo TypeScript, có test, có tài liệu và triển khai bằng một lệnh.
 
+[![CI](https://github.com/scoobingoo/telegram-miniapp-bot-starter/actions/workflows/ci.yml/badge.svg)](https://github.com/scoobingoo/telegram-miniapp-bot-starter/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/scoobingoo/telegram-miniapp-bot-starter?include_prereleases&color=2ea44f)](https://github.com/scoobingoo/telegram-miniapp-bot-starter/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 ![Node.js 24](https://img.shields.io/badge/node-24-339933?logo=node.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)
 ![NestJS](https://img.shields.io/badge/NestJS-12-E0234E?logo=nestjs&logoColor=white)
 ![grammY](https://img.shields.io/badge/grammY-1.x-009DC4)
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
 [English](./README.md) · Tiếng Việt
 
@@ -44,7 +47,7 @@ Chỉ cần bot hoặc chỉ cần Mini App thì dùng template là đủ. Khi x
 Cần Node.js 24, pnpm 12, Docker và một bot token từ [@BotFather](https://t.me/BotFather) (nên dùng bot riêng cho môi trường phát triển).
 
 ```bash
-git clone https://github.com/<you>/tgstack.git && cd tgstack
+git clone https://github.com/scoobingoo/telegram-miniapp-bot-starter.git && cd telegram-miniapp-bot-starter
 pnpm install
 cp .env.example .env
 ```
