@@ -67,7 +67,7 @@
     "@nestjs/testing": "^12.2.0",
     "@swc/core": "^1.16.18",
     "@tgstack/config": "workspace:*",
-    "@types/node": "^24.19.2",
+    "@types/node": "^26.6.5",
     "@types/supertest": "^7.2.1",
     "@vitest/coverage-v8": "^5.0.5",
     "grammy": "^1.46.0",
