@@ -2,8 +2,8 @@
 
 **The production-ready, full-stack Telegram starter.** A NestJS + grammY bot, a Telegram Mini App, an admin dashboard, rate-limited broadcasts and Telegram Stars payments: one TypeScript monorepo, tested, documented and deployable with one command.
 
-[![CI](https://github.com/scoobingoo/telegram-miniapp-bot-starter/actions/workflows/ci.yml/badge.svg)](https://github.com/scoobingoo/telegram-miniapp-bot-starter/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/scoobingoo/telegram-miniapp-bot-starter?include_prereleases&color=2ea44f)](https://github.com/scoobingoo/telegram-miniapp-bot-starter/releases)
+[![CI](https://github.com/scoobingoo/tgstack/actions/workflows/ci.yml/badge.svg)](https://github.com/scoobingoo/tgstack/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/scoobingoo/tgstack?include_prereleases&color=2ea44f)](https://github.com/scoobingoo/tgstack/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 ![Node.js 24](https://img.shields.io/badge/node-24-339933?logo=node.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)
@@ -47,7 +47,7 @@ Pick a template when you need only a bot or only a Mini App. Pick tgstack when y
 You need Node.js 24, pnpm 12, Docker and a bot token from [@BotFather](https://t.me/BotFather) (use a separate bot for development).
 
 ```bash
-git clone https://github.com/scoobingoo/telegram-miniapp-bot-starter.git && cd telegram-miniapp-bot-starter
+git clone https://github.com/scoobingoo/tgstack.git && cd tgstack
 pnpm install
 cp .env.example .env
 ```

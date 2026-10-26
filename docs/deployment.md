@@ -22,7 +22,7 @@ One domain means no CORS, first-party cookies for the dashboard, and an HTTPS Mi
 ## First deployment
 
 ```bash
-git clone https://github.com/scoobingoo/telegram-miniapp-bot-starter.git && cd telegram-miniapp-bot-starter
+git clone https://github.com/scoobingoo/tgstack.git && cd tgstack
 cp .env.example .env
 ```
 

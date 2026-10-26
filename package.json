@@ -5,13 +5,13 @@
   "description": "Production-ready full-stack Telegram starter: NestJS + grammY bot, Mini App, admin dashboard, rate-limited broadcasts and Telegram Stars payments.",
   "license": "MIT",
   "author": "Son Le <sonlocle36123@gmail.com> (https://github.com/scoobingoo)",
-  "homepage": "https://github.com/scoobingoo/telegram-miniapp-bot-starter#readme",
+  "homepage": "https://github.com/scoobingoo/tgstack#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/scoobingoo/telegram-miniapp-bot-starter.git"
+    "url": "git+https://github.com/scoobingoo/tgstack.git"
   },
   "bugs": {
-    "url": "https://github.com/scoobingoo/telegram-miniapp-bot-starter/issues"
+    "url": "https://github.com/scoobingoo/tgstack/issues"
   },
   "type": "module",
   "packageManager": "pnpm@12.14.0",

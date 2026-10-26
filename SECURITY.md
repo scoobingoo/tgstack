@@ -13,7 +13,7 @@ Only the latest `1.x` release line actively receives security updates.
 
 Please **do not** report security vulnerabilities through public GitHub issues.
 
-Instead, report them privately via [GitHub Security Advisories](https://github.com/scoobingoo/telegram-miniapp-bot-starter/security/advisories/new).
+Instead, report them privately via [GitHub Security Advisories](https://github.com/scoobingoo/tgstack/security/advisories/new).
 
 Include as much of the following information as possible:
 - Type of issue (e.g., authentication bypass, webhook signature verification, injection, SSRF)
