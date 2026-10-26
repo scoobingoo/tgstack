@@ -41,6 +41,6 @@
     "@changesets/cli": "3.0.3",
     "@types/node": "^24.19.2",
     "turbo": "2.11.10",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   }
 }
