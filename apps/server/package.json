@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@nestjs/testing": "^12.2.0",
-    "@swc/core": "^1.16.18",
+    "@swc/core": "^1.16.20",
     "@tgstack/config": "workspace:*",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
